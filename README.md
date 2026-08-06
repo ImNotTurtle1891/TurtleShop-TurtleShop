@@ -164,6 +164,13 @@ Two copies of the bot are running with the same token, and they race each other 
 - Your SellAuth API key has full access to your shop. Only run this bot on machines you control.
 - Customer emails are masked in `/top customers` output, but revenue data is still sensitive — keep the commands admin-only unless you're comfortable sharing it.
 
+## Suggestions, custom versions & hosting
+
+Have a feature suggestion, or want a custom version of SellBot with extra functionality or changes tailored to your shop? Don't want to self-host and would rather have the bot hosted for you? Get in touch:
+
+- **Discord:** `barkiegg`
+- **Email:** [barkie.media@gmail.com](mailto:barkie.media@gmail.com)
+
 ## License
 
 SellBot was made by **Barkie** ([barkiedev.cc](https://barkiedev.cc)) and is released under the [MIT License](LICENSE).
