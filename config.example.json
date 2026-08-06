@@ -12,7 +12,8 @@
     "product": "admin",
     "commands": "admin",
     "redeemorder": "everyone",
-    "claimorder-embed": "admin"
+    "claimorder-embed": "admin",
+    "customer": "support"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

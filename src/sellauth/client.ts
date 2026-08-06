@@ -1,7 +1,10 @@
 import type {
   AnalyticsSummary,
+  CustomerPage,
+  CustomerSummary,
   DateRange,
   Invoice,
+  InvoicePage,
   ProductDetail,
   ProductListQuery,
   ProductPage,
@@ -82,6 +85,23 @@ export class SellAuthClient {
   /** Accepts either the numeric invoice ID or the customer-facing unique ID. */
   public async getInvoice(invoiceId: string): Promise<Invoice> {
     return this.get<Invoice>(`/invoices/${encodeURIComponent(invoiceId)}`);
+  }
+
+  public async findCustomerByEmail(email: string): Promise<CustomerSummary | null> {
+    const page = await this.get<CustomerPage>('/customers', { email });
+    return page.data[0] ?? null;
+  }
+
+  public async getInvoicesByEmail(
+    email: string,
+    page: number,
+    perPage: number
+  ): Promise<InvoicePage> {
+    return this.get<InvoicePage>('/invoices', {
+      email,
+      page: String(page),
+      perPage: String(perPage)
+    });
   }
 
   private async get<T>(path: string, query?: QueryParams): Promise<T> {

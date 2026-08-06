@@ -89,6 +89,38 @@ export interface ProductListQuery {
 
 export interface InvoiceItem {
   readonly product: { readonly name: string } | null;
+  readonly variant: { readonly name: string | null } | null;
+}
+
+export interface CustomerSummary {
+  readonly id: number;
+  readonly email: string;
+  readonly discord_username: string | null;
+  readonly balance: string;
+  readonly total_completed: number;
+  readonly total_spent_usd: string;
+  readonly last_completed_at: string | null;
+}
+
+export interface CustomerPage {
+  readonly data: readonly CustomerSummary[];
+}
+
+export interface InvoiceListItem {
+  readonly id: number;
+  readonly unique_id: string;
+  readonly status: string;
+  readonly price: string | null;
+  readonly currency: string | null;
+  readonly created_at: string;
+  readonly items: readonly InvoiceItem[];
+}
+
+export interface InvoicePage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly InvoiceListItem[];
 }
 
 export interface Invoice {

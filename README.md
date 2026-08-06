@@ -16,6 +16,7 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/commands` | List all SellBot commands and the permission level each one requires. |
 | `/redeemorder <orderid>` | Customers verify a completed order and receive the customer role. |
 | `/claimorder-embed` | Admins post a permanent embed with a "Claim Order" button that opens an order-ID form. |
+| `/customer <email>` | Look up a customer: spend, balance, Discord account, and their full order history with ◀ ▶ pagination. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 
@@ -109,6 +110,11 @@ For development with automatic reload on file changes:
 ```bash
 npm run dev
 ```
+
+## Troubleshooting
+
+**The bot replies or posts embeds twice, or logs `Unknown interaction` / `Interaction has already been acknowledged` errors.**
+Two copies of the bot are running with the same token, and they race each other on every interaction. Common cause: `npm run dev` left running in one terminal while `startbot.bat` or `npm start` runs in another. Close all but one instance. If you can't find the extra instance (e.g. it's on another machine), reset the bot token in the [Discord Developer Portal](https://discord.com/developers/applications) — that disconnects everything, then start a single instance with the new token.
 
 ## Security notes
 

@@ -1,6 +1,7 @@
 import { analyticsCommand } from './analytics.js';
 import { claimOrderEmbedCommand } from './claimorder-embed.js';
 import { commandsCommand } from './commands.js';
+import { customerCommand } from './customer.js';
 import { productCommand } from './product.js';
 import { productsCommand } from './products.js';
 import { redeemOrderCommand } from './redeemorder.js';
@@ -16,5 +17,6 @@ export const commands: readonly Command[] = [
   productCommand,
   commandsCommand,
   redeemOrderCommand,
-  claimOrderEmbedCommand
+  claimOrderEmbedCommand,
+  customerCommand
 ];

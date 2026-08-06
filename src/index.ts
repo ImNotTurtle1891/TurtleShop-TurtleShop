@@ -12,6 +12,10 @@ import { commands } from './commands/index.js';
 import type { Command, CommandContext } from './commands/types.js';
 import { loadConfig } from './config.js';
 import {
+  CUSTOMER_PAGE_BUTTON_PREFIX,
+  handleCustomerPageButton
+} from './commands/customer.js';
+import {
   CLAIM_ORDER_BUTTON_ID,
   CLAIM_ORDER_MODAL_ID,
   handleClaimOrderModal,
@@ -92,6 +96,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
         await openClaimOrderModal(interaction);
       } catch (error) {
         console.error('Failed to open the claim-order modal:', error);
+      }
+    } else if (interaction.customId.startsWith(CUSTOMER_PAGE_BUTTON_PREFIX)) {
+      try {
+        await handleCustomerPageButton(interaction, context);
+      } catch (error) {
+        console.error('Customer pagination failed:', error);
       }
     }
     return;

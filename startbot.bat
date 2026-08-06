@@ -27,6 +27,19 @@ if not exist .env if not exist .env.local (
     exit /b 1
 )
 
+set RUNNINGCOUNT=0
+for /f %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_Process | Where-Object { $_.Name -like 'node*' -and $_.CommandLine -match 'dist[\\/]index\.js|src[\\/]index\.ts' } | Measure-Object).Count"') do set RUNNINGCOUNT=%%i
+if not "%RUNNINGCOUNT%"=="0" (
+    echo [WARNING] The bot appears to already be running ^(%RUNNINGCOUNT% instance^(s^) found^).
+    echo           Running two copies at once makes the bot reply twice and log
+    echo           "Unknown interaction" errors. Close the other one first
+    echo           ^(e.g. stop "npm run dev" or another launcher window^).
+    echo.
+    choice /c YN /m "Start anyway"
+    if errorlevel 2 exit /b 1
+    echo.
+)
+
 echo [1/4] Installing dependencies...
 call npm install --no-audit --no-fund
 if errorlevel 1 (
