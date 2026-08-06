@@ -17,6 +17,7 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/redeemorder <orderid>` | Customers verify a completed order and receive the customer role. |
 | `/claimorder-embed` | Admins post a permanent embed with a "Claim Order" button that opens an order-ID form. |
 | `/customer <email>` | Look up a customer: spend, balance, Discord account, and their full order history with ◀ ▶ pagination. |
+| `/order <id>` | Full details of one order: status, total, payment method, customer, items, feedback, IP, blacklist flags, and who claimed it. Accepts the numeric or unique invoice ID. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 

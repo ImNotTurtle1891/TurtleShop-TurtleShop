@@ -13,7 +13,8 @@
     "commands": "admin",
     "redeemorder": "everyone",
     "claimorder-embed": "admin",
-    "customer": "support"
+    "customer": "support",
+    "order": "support"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

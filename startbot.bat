@@ -28,9 +28,9 @@ if not exist .env if not exist .env.local (
 )
 
 set RUNNINGCOUNT=0
-for /f %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_Process | Where-Object { $_.Name -like 'node*' -and $_.CommandLine -match 'dist[\\/]index\.js|src[\\/]index\.ts' } | Measure-Object).Count"') do set RUNNINGCOUNT=%%i
+for /f %%i in ('powershell -NoProfile -Command "$root=[regex]::Escape((Get-Location).Path); (Get-CimInstance Win32_Process | Where-Object { $_.Name -like 'node*' -and ($_.CommandLine -match '\sdist[\\/]index\.js' -or ($_.CommandLine -match $root -and $_.CommandLine -match 'src[\\/]index\.ts')) } | Measure-Object).Count"') do set RUNNINGCOUNT=%%i
 if not "%RUNNINGCOUNT%"=="0" (
-    echo [WARNING] The bot appears to already be running ^(%RUNNINGCOUNT% instance^(s^) found^).
+    echo [WARNING] The bot appears to already be running in another window.
     echo           Running two copies at once makes the bot reply twice and log
     echo           "Unknown interaction" errors. Close the other one first
     echo           ^(e.g. stop "npm run dev" or another launcher window^).

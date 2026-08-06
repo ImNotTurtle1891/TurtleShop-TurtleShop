@@ -123,11 +123,50 @@ export interface InvoicePage {
   readonly data: readonly InvoiceListItem[];
 }
 
+export interface InvoiceDetailItem extends InvoiceItem {
+  readonly product_id: number;
+  readonly custom_name: string | null;
+  readonly quantity: number;
+  readonly price: string | null;
+  /** Delivered serials/keys. Contents are sensitive — only ever show the count. */
+  readonly delivered: readonly string[] | null;
+}
+
+export interface InvoiceCustomer {
+  readonly id: number;
+  readonly email: string;
+  readonly discord_id: string | null;
+  readonly discord_username: string | null;
+}
+
+export interface InvoiceFeedback {
+  readonly rating: number;
+  readonly message: string | null;
+}
+
+export interface InvoiceBlacklistStatus {
+  readonly email: boolean;
+  readonly discord_id: boolean;
+  readonly ip: boolean;
+}
+
 export interface Invoice {
   readonly id: number;
   readonly unique_id: string;
   readonly status: string;
   readonly email: string | null;
+  readonly created_at: string;
   readonly completed_at: string | null;
-  readonly items: readonly InvoiceItem[];
+  readonly price: string | null;
+  readonly paid: string | null;
+  readonly currency: string | null;
+  readonly gateway: string | null;
+  readonly manual: boolean;
+  readonly ip: string | null;
+  readonly country_code: string | null;
+  readonly payment_method: { readonly name: string } | null;
+  readonly customer: InvoiceCustomer | null;
+  readonly feedback: InvoiceFeedback | null;
+  readonly blacklist_status: InvoiceBlacklistStatus | null;
+  readonly items: readonly InvoiceDetailItem[];
 }
