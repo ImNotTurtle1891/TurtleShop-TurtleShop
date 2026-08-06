@@ -23,7 +23,7 @@ const sellAuth = new SellAuthClient({
   baseUrl: config.sellAuthBaseUrl
 });
 
-const context: CommandContext = { sellAuth };
+const context: CommandContext = { sellAuth, botConfig };
 
 const commandsByName = new Map<string, Command>(
   commands.map((command) => [command.data.name, command])
@@ -80,6 +80,27 @@ client.once(Events.ClientReady, (readyClient) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  if (interaction.isAutocomplete()) {
+    const command = commandsByName.get(interaction.commandName);
+    if (command?.autocomplete === undefined) {
+      return;
+    }
+    try {
+      const access = evaluateAccess(interaction, botConfig);
+      if (!access.allowed) {
+        await interaction.respond([]);
+        return;
+      }
+      await command.autocomplete(interaction, context);
+    } catch (error) {
+      console.error(`Autocomplete for /${interaction.commandName} failed:`, error);
+      if (!interaction.responded) {
+        await interaction.respond([]).catch(() => undefined);
+      }
+    }
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) {
     return;
   }

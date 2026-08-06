@@ -1,5 +1,12 @@
-import { PermissionFlagsBits, type ChatInputCommandInteraction } from 'discord.js';
+import {
+  PermissionFlagsBits,
+  type AutocompleteInteraction,
+  type ChatInputCommandInteraction
+} from 'discord.js';
 import { permissionLevelFor, rolesForLevel, type SellBotConfig } from '../botConfig.js';
+
+/** Autocomplete requests go through the same access rules as command runs. */
+type CommandLikeInteraction = ChatInputCommandInteraction | AutocompleteInteraction;
 
 export type AccessDecision =
   | { readonly allowed: true }
@@ -8,7 +15,7 @@ export type AccessDecision =
 const ALLOWED: AccessDecision = { allowed: true };
 
 function checkChannel(
-  interaction: ChatInputCommandInteraction<'cached'>,
+  interaction: ChatInputCommandInteraction<'cached'> | AutocompleteInteraction<'cached'>,
   config: SellBotConfig
 ): AccessDecision {
   if (config.allowedChannelIds.length === 0) {
@@ -26,7 +33,7 @@ function checkChannel(
 }
 
 export function evaluateAccess(
-  interaction: ChatInputCommandInteraction,
+  interaction: CommandLikeInteraction,
   config: SellBotConfig
 ): AccessDecision {
   if (!interaction.inCachedGuild()) {

@@ -71,6 +71,16 @@ export interface ProductPage {
   readonly data: readonly ProductSummary[];
 }
 
+export interface ProductImage {
+  readonly url: string;
+}
+
+export interface ProductDetail extends ProductSummary {
+  readonly description: string | null;
+  readonly products_sold: number;
+  readonly images: readonly ProductImage[];
+}
+
 export interface ProductListQuery {
   readonly page: number;
   readonly perPage: number;

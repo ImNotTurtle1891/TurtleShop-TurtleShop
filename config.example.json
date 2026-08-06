@@ -8,7 +8,9 @@
     "analytics": "admin",
     "top": "admin",
     "top customers": "admin",
-    "products": "admin"
+    "products": "admin",
+    "product": "admin",
+    "commands": "admin"
   },
   "allowedChannelIds": []
 }

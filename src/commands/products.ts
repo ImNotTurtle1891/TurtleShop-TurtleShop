@@ -4,16 +4,12 @@ import {
   SlashCommandBuilder,
   type ChatInputCommandInteraction
 } from 'discord.js';
-import { formatCount } from '../lib/format.js';
+import { formatCount, formatPrice } from '../lib/format.js';
 import type { ProductListQuery, ProductSummary } from '../sellauth/types.js';
 import { EMBED_COLOR, type Command, type CommandContext } from './types.js';
 
 const PRODUCTS_PER_PAGE = 10;
 const UNLIMITED_STOCK = -1;
-
-function formatPrice(amount: number, currency: string): string {
-  return currency === 'USD' ? `$${amount.toFixed(2)}` : `${amount.toFixed(2)} ${currency}`;
-}
 
 function priceLabel(product: ProductSummary): string {
   const variantPrices = product.variants

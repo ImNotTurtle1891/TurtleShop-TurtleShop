@@ -9,6 +9,14 @@ export function formatUsd(amount: number): string {
   return USD_FORMATTER.format(amount);
 }
 
+export function formatPrice(amount: number, currency: string): string {
+  return currency === 'USD' ? `$${amount.toFixed(2)}` : `${amount.toFixed(2)} ${currency}`;
+}
+
+export function truncate(text: string, maxLength: number): string {
+  return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}\u2026`;
+}
+
 export function formatCount(count: number): string {
   return COUNT_FORMATTER.format(count);
 }

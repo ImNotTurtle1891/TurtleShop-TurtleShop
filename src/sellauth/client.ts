@@ -1,6 +1,7 @@
 import type {
   AnalyticsSummary,
   DateRange,
+  ProductDetail,
   ProductListQuery,
   ProductPage,
   ShopStats,
@@ -71,6 +72,10 @@ export class SellAuthClient {
       params['name'] = query.name;
     }
     return this.get<ProductPage>('/products', params);
+  }
+
+  public async getProduct(productId: number): Promise<ProductDetail> {
+    return this.get<ProductDetail>(`/products/${productId}`);
   }
 
   private async get<T>(path: string, query?: QueryParams): Promise<T> {

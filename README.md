@@ -12,6 +12,8 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/top customers [timeframe]` | Top 10 customers by revenue (emails are masked). |
 | `/top payment-methods [timeframe]` | Top payment methods by revenue. |
 | `/products [search] [page]` | Browse products with prices and stock counts, optionally filtered by name. |
+| `/product <name>` | Detailed view of one product with per-variant prices and stock. The name option autocompletes from your live catalog. |
+| `/commands` | List all SellBot commands and the permission level each one requires. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 
