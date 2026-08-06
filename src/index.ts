@@ -7,12 +7,15 @@ import {
   type ChatInputCommandInteraction,
   type Client as ReadyDiscordClient
 } from 'discord.js';
+import { loadBotConfig } from './botConfig.js';
 import { commands } from './commands/index.js';
 import type { Command, CommandContext } from './commands/types.js';
 import { loadConfig } from './config.js';
+import { evaluateAccess } from './lib/permissions.js';
 import { SellAuthApiError, SellAuthClient } from './sellauth/client.js';
 
 const config = loadConfig();
+const botConfig = loadBotConfig();
 
 const sellAuth = new SellAuthClient({
   apiKey: config.sellAuthApiKey,
@@ -83,6 +86,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
   const command = commandsByName.get(interaction.commandName);
   if (command === undefined) {
+    return;
+  }
+
+  const access = evaluateAccess(interaction, botConfig);
+  if (!access.allowed) {
+    await interaction.reply({ content: access.reason, flags: MessageFlags.Ephemeral });
     return;
   }
 

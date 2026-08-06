@@ -1,0 +1,13 @@
+{
+  "roles": {
+    "adminRoleIds": [],
+    "supportRoleIds": []
+  },
+  "commandPermissions": {
+    "stats": "admin",
+    "analytics": "admin",
+    "top": "admin",
+    "top customers": "admin"
+  },
+  "allowedChannelIds": []
+}

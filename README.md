@@ -14,7 +14,38 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 
-All responses are ephemeral (only visible to the person who ran the command), and commands require the **Manage Server** permission by default. Server admins can adjust this per command under **Server Settings → Integrations**.
+All responses are ephemeral (only visible to the person who ran the command). Without any configuration, commands require the **Manage Server** permission. See [Configuration](#configuration) to use your own admin/support roles instead.
+
+## Configuration
+
+Copy `config.example.json` to `config.json` to control who can use which commands and where:
+
+```json
+{
+  "roles": {
+    "adminRoleIds": ["123456789012345678"],
+    "supportRoleIds": ["234567890123456789"]
+  },
+  "commandPermissions": {
+    "stats": "admin",
+    "analytics": "admin",
+    "top": "support",
+    "top customers": "admin"
+  },
+  "allowedChannelIds": ["345678901234567890"]
+}
+```
+
+- **`roles.adminRoleIds` / `roles.supportRoleIds`** — Discord role IDs (right-click a role → Copy Role ID, with Developer Mode enabled). Members with an admin role can use everything; support roles only unlock commands set to `"support"`.
+- **`commandPermissions`** — permission level per command: `"admin"`, `"support"`, or `"everyone"`. Commands not listed default to `"admin"`. Subcommands can override their parent with a `"command subcommand"` key — in the example above, support staff can use `/top products`, but `/top customers` stays admin-only.
+- **`allowedChannelIds`** — channel or category IDs where commands are allowed. A category ID allows every channel inside it. Leave empty to allow commands everywhere.
+
+Notes:
+
+- Server Administrators always have access, so you can never lock yourself out.
+- If no roles are configured for a level, that level falls back to requiring the **Manage Server** permission.
+- After changing `config.json`, restart the bot and re-run `npm run deploy-commands` (command visibility in Discord's UI is set at registration time).
+- `config.json` is gitignored since it contains your server-specific IDs.
 
 ## Requirements
 
@@ -41,6 +72,10 @@ https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot+applicat
 2. Find your shop's numeric ID — this is your `SELLAUTH_SHOP_ID`.
 
 ### 3. Configure and run the bot
+
+**Windows quick start:** double-click `startbot.bat`. It checks that Node.js is installed, creates a `.env` file for you to fill in on first run, then installs dependencies, validates your configuration, registers the slash commands, and starts the bot.
+
+**Manual setup (all platforms):**
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/Sellauth-Discord-Bot.git

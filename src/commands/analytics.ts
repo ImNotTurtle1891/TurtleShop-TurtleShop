@@ -1,7 +1,6 @@
 import {
   EmbedBuilder,
   MessageFlags,
-  PermissionFlagsBits,
   SlashCommandBuilder,
   type ChatInputCommandInteraction
 } from 'discord.js';
@@ -21,7 +20,6 @@ export const analyticsCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('analytics')
     .setDescription('Revenue, orders and customers for a timeframe')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addStringOption((option) =>
       option
         .setName('timeframe')

@@ -1,7 +1,6 @@
 import {
   EmbedBuilder,
   MessageFlags,
-  PermissionFlagsBits,
   SlashCommandBuilder,
   type ChatInputCommandInteraction
 } from 'discord.js';
@@ -11,8 +10,7 @@ import { EMBED_COLOR, type Command, type CommandContext } from './types.js';
 export const statsCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('stats')
-    .setDescription('Lifetime shop statistics from SellAuth')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+    .setDescription('Lifetime shop statistics from SellAuth'),
 
   async execute(
     interaction: ChatInputCommandInteraction,

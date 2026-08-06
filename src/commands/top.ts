@@ -1,7 +1,6 @@
 import {
   EmbedBuilder,
   MessageFlags,
-  PermissionFlagsBits,
   SlashCommandBuilder,
   type ChatInputCommandInteraction,
   type SlashCommandSubcommandBuilder
@@ -71,7 +70,6 @@ export const topCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('top')
     .setDescription('Top performers by revenue')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand((subcommand) =>
       withTimeframeOption(
         subcommand.setName('products').setDescription('Top 10 products by revenue')

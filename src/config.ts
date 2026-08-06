@@ -16,15 +16,16 @@ export interface BotConfig {
   readonly sellAuthBaseUrl: string;
 }
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (value === undefined || value.trim() === '') {
-    console.error(
-      `Missing required environment variable ${name}. Copy .env.example to .env and fill it in.`
-    );
-    process.exit(1);
-  }
-  return value.trim();
+const REQUIRED_ENV_VARS = [
+  'DISCORD_TOKEN',
+  'DISCORD_CLIENT_ID',
+  'SELLAUTH_API_KEY',
+  'SELLAUTH_SHOP_ID'
+] as const;
+
+function readEnv(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value === undefined || value === '' ? undefined : value;
 }
 
 function normalizeBaseUrl(url: string): string {
@@ -32,14 +33,22 @@ function normalizeBaseUrl(url: string): string {
 }
 
 export function loadConfig(): BotConfig {
-  const guildId = process.env['DISCORD_GUILD_ID']?.trim();
+  const missing = REQUIRED_ENV_VARS.filter((name) => readEnv(name) === undefined);
+  if (missing.length > 0) {
+    console.error('Missing required environment variables:');
+    for (const name of missing) {
+      console.error(`  - ${name}`);
+    }
+    console.error('Copy .env.example to .env, fill in the values, and try again.');
+    process.exit(1);
+  }
 
   return {
-    discordToken: requireEnv('DISCORD_TOKEN'),
-    discordClientId: requireEnv('DISCORD_CLIENT_ID'),
-    discordGuildId: guildId === undefined || guildId === '' ? undefined : guildId,
-    sellAuthApiKey: requireEnv('SELLAUTH_API_KEY'),
-    sellAuthShopId: requireEnv('SELLAUTH_SHOP_ID'),
-    sellAuthBaseUrl: normalizeBaseUrl(process.env['SELLAUTH_BASE_URL'] ?? DEFAULT_BASE_URL)
+    discordToken: readEnv('DISCORD_TOKEN') ?? '',
+    discordClientId: readEnv('DISCORD_CLIENT_ID') ?? '',
+    discordGuildId: readEnv('DISCORD_GUILD_ID'),
+    sellAuthApiKey: readEnv('SELLAUTH_API_KEY') ?? '',
+    sellAuthShopId: readEnv('SELLAUTH_SHOP_ID') ?? '',
+    sellAuthBaseUrl: normalizeBaseUrl(readEnv('SELLAUTH_BASE_URL') ?? DEFAULT_BASE_URL)
   };
 }
