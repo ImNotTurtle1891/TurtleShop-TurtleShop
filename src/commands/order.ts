@@ -4,7 +4,8 @@ import {
   SlashCommandBuilder,
   time,
   TimestampStyles,
-  type ChatInputCommandInteraction
+  type ChatInputCommandInteraction,
+  type SlashCommandSubcommandBuilder
 } from 'discord.js';
 import { getClaim } from '../lib/claimStore.js';
 import { formatPrice, truncate } from '../lib/format.js';
@@ -168,16 +169,67 @@ async function buildOrderEmbed(invoice: Invoice, context: CommandContext): Promi
   return embed;
 }
 
+function addIdOption(subcommand: SlashCommandSubcommandBuilder): SlashCommandSubcommandBuilder {
+  return subcommand.addStringOption((option) =>
+    option
+      .setName('id')
+      .setDescription('The invoice ID (numeric or the customer-facing unique ID)')
+      .setRequired(true)
+      .setMaxLength(64)
+  );
+}
+
+interface OrderAction {
+  readonly targetStatus: string;
+  readonly run: (context: CommandContext, invoiceId: number) => Promise<void>;
+  readonly successMessage: string;
+}
+
+const ORDER_ACTIONS: Readonly<Record<string, OrderAction>> = {
+  complete: {
+    targetStatus: 'completed',
+    run: async (context, invoiceId) => context.sellAuth.updateInvoiceStatus(invoiceId, 'completed'),
+    successMessage: 'has been marked as **completed**.'
+  },
+  refund: {
+    targetStatus: 'refunded',
+    run: async (context, invoiceId) => context.sellAuth.refundInvoice(invoiceId),
+    successMessage:
+      'has been marked as **refunded**. Note: this does not return any money by itself — process the actual refund with your payment provider.'
+  },
+  cancel: {
+    targetStatus: 'cancelled',
+    run: async (context, invoiceId) => context.sellAuth.cancelInvoice(invoiceId),
+    successMessage: 'has been marked as **cancelled**.'
+  }
+};
+
 export const orderCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('order')
-    .setDescription('Look up the full details of an order by its ID')
-    .addStringOption((option) =>
-      option
-        .setName('id')
-        .setDescription('The invoice ID (numeric or the customer-facing unique ID)')
-        .setRequired(true)
-        .setMaxLength(64)
+    .setDescription('Look up or manage an order by its ID')
+    .addSubcommand((subcommand) =>
+      addIdOption(subcommand.setName('check').setDescription('Full details of an order'))
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(subcommand.setName('complete').setDescription('Mark an order as completed'))
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(subcommand.setName('refund').setDescription('Mark an order as refunded'))
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(subcommand.setName('cancel').setDescription('Mark an order as cancelled'))
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand.setName('resend-email').setDescription('Resend the order confirmation email')
+      ).addStringOption((option) =>
+        option
+          .setName('email')
+          .setDescription('Send to this address instead of the one on the order')
+          .setRequired(false)
+          .setMaxLength(254)
+      )
     ),
 
   async execute(
@@ -203,6 +255,64 @@ export const orderCommand: Command = {
       throw error;
     }
 
-    await interaction.editReply({ embeds: [await buildOrderEmbed(invoice, context)] });
+    const subcommand = interaction.options.getSubcommand();
+
+    if (subcommand === 'check') {
+      await interaction.editReply({ embeds: [await buildOrderEmbed(invoice, context)] });
+      return;
+    }
+
+    if (subcommand === 'resend-email') {
+      const email = interaction.options.getString('email')?.trim();
+      try {
+        await context.sellAuth.resendInvoiceEmail(invoice.id, email);
+      } catch (error) {
+        await replyWithApiError(interaction, error, 'resend the confirmation email');
+        return;
+      }
+      const target = email ?? invoice.customer?.email ?? invoice.email ?? 'the customer';
+      await interaction.editReply({
+        content: `Confirmation email for order \`${invoice.unique_id}\` was resent to **${target}**.`
+      });
+      return;
+    }
+
+    const action = ORDER_ACTIONS[subcommand];
+    if (action === undefined) {
+      await interaction.editReply({ content: 'Unknown subcommand.' });
+      return;
+    }
+
+    if (invoice.status === action.targetStatus) {
+      await interaction.editReply({
+        content: `Order \`${invoice.unique_id}\` is already ${action.targetStatus}.`
+      });
+      return;
+    }
+
+    try {
+      await action.run(context, invoice.id);
+    } catch (error) {
+      await replyWithApiError(interaction, error, `mark the order as ${action.targetStatus}`);
+      return;
+    }
+
+    const updated = await context.sellAuth.getInvoice(String(invoice.id));
+    await interaction.editReply({
+      content: `Order \`${invoice.unique_id}\` ${action.successMessage}`,
+      embeds: [await buildOrderEmbed(updated, context)]
+    });
   }
 };
+
+async function replyWithApiError(
+  interaction: ChatInputCommandInteraction,
+  error: unknown,
+  actionLabel: string
+): Promise<void> {
+  if (!(error instanceof SellAuthApiError)) {
+    throw error;
+  }
+  const reason = error.apiMessage ?? `the SellAuth API responded with HTTP ${error.status}`;
+  await interaction.editReply({ content: `Could not ${actionLabel}: ${reason}` });
+}

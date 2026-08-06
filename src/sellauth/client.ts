@@ -22,11 +22,24 @@ function dateRangeParams(range: DateRange): QueryParams {
 
 export class SellAuthApiError extends Error {
   public readonly status: number;
+  /** Short human-readable error from the API response body, when available. */
+  public readonly apiMessage: string | null;
 
-  public constructor(status: number, message: string) {
+  public constructor(status: number, message: string, apiMessage: string | null = null) {
     super(message);
     this.name = 'SellAuthApiError';
     this.status = status;
+    this.apiMessage = apiMessage;
+  }
+}
+
+function extractApiMessage(body: string): string | null {
+  try {
+    const parsed = JSON.parse(body) as { error?: unknown; message?: unknown };
+    const candidate = parsed.error ?? parsed.message;
+    return typeof candidate === 'string' && candidate !== '' ? candidate : null;
+  } catch {
+    return null;
   }
 }
 
@@ -87,6 +100,29 @@ export class SellAuthClient {
     return this.get<Invoice>(`/invoices/${encodeURIComponent(invoiceId)}`);
   }
 
+  public async updateInvoiceStatus(
+    invoiceId: number,
+    status: 'completed' | 'cancelled' | 'failed' | 'refunded'
+  ): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/status`, { body: { status } });
+  }
+
+  public async refundInvoice(invoiceId: number): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/refund`);
+  }
+
+  public async cancelInvoice(invoiceId: number): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/cancel`);
+  }
+
+  public async resendInvoiceEmail(invoiceId: number, email?: string): Promise<void> {
+    await this.request(
+      'POST',
+      `/invoices/${invoiceId}/resend-email`,
+      email === undefined ? {} : { body: { email } }
+    );
+  }
+
   public async findCustomerByEmail(email: string): Promise<CustomerSummary | null> {
     const page = await this.get<CustomerPage>('/customers', { email });
     return page.data[0] ?? null;
@@ -105,26 +141,47 @@ export class SellAuthClient {
   }
 
   private async get<T>(path: string, query?: QueryParams): Promise<T> {
+    return this.request<T>('GET', path, { query });
+  }
+
+  private async request<T>(
+    method: 'GET' | 'POST' | 'PUT',
+    path: string,
+    options: {
+      query?: QueryParams | undefined;
+      body?: Readonly<Record<string, string>> | undefined;
+    } = {}
+  ): Promise<T> {
     const url = new URL(`${this.baseUrl}/shops/${this.shopId}${path}`);
-    for (const [key, value] of Object.entries(query ?? {})) {
+    for (const [key, value] of Object.entries(options.query ?? {})) {
       url.searchParams.set(key, value);
     }
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${this.apiKey}`,
+      Accept: 'application/json'
+    };
+    if (options.body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        Accept: 'application/json'
-      }
+      method,
+      headers,
+      body: options.body === undefined ? null : JSON.stringify(options.body)
     });
 
     if (!response.ok) {
       const body = await response.text();
       throw new SellAuthApiError(
         response.status,
-        `SellAuth API request to ${path} failed with status ${response.status}: ${body}`
+        `SellAuth API ${method} ${path} failed with status ${response.status}: ${body}`,
+        extractApiMessage(body)
       );
     }
 
-    return (await response.json()) as T;
+    const text = await response.text();
+    // Action endpoints can return an empty body on success.
+    return (text === '' ? undefined : JSON.parse(text)) as T;
   }
 }

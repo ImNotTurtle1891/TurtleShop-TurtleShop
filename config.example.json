@@ -14,7 +14,10 @@
     "redeemorder": "everyone",
     "claimorder-embed": "admin",
     "customer": "support",
-    "order": "support"
+    "order": "support",
+    "order complete": "admin",
+    "order refund": "admin",
+    "order cancel": "admin"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

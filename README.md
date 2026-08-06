@@ -17,7 +17,11 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/redeemorder <orderid>` | Customers verify a completed order and receive the customer role. |
 | `/claimorder-embed` | Admins post a permanent embed with a "Claim Order" button that opens an order-ID form. |
 | `/customer <email>` | Look up a customer: spend, balance, Discord account, and their full order history with ◀ ▶ pagination. |
-| `/order <id>` | Full details of one order: status, total, payment method, customer, items, feedback, IP, blacklist flags, and who claimed it. Accepts the numeric or unique invoice ID. |
+| `/order check <id>` | Full details of one order: status, total, payment method, customer, items, feedback, IP, blacklist flags, and who claimed it. Accepts the numeric or unique invoice ID. |
+| `/order complete <id>` | Mark an order as completed. |
+| `/order refund <id>` | Mark an order as refunded (does not move money — process the actual refund with your payment provider). |
+| `/order cancel <id>` | Mark an order as cancelled. |
+| `/order resend-email <id> [email]` | Resend the order confirmation email, optionally to a different address. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 
