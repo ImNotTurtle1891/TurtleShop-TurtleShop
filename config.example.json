@@ -17,7 +17,8 @@
     "order": "support",
     "order complete": "admin",
     "order refund": "admin",
-    "order cancel": "admin"
+    "order cancel": "admin",
+    "coupon": "admin"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

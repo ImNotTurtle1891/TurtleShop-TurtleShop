@@ -87,6 +87,42 @@ export interface ProductListQuery {
   readonly name?: string;
 }
 
+export interface Coupon {
+  readonly id: number;
+  readonly code: string;
+  /** false means the coupon only applies to specific products. */
+  readonly global: boolean;
+  readonly discount: string;
+  readonly uses: number;
+  readonly max_uses: number | null;
+  readonly max_uses_per_customer: number | null;
+  readonly min_invoice_price: string | number | null;
+  readonly type: string;
+  readonly start_date: string | null;
+  readonly expiration_date: string | null;
+  readonly last_used_at: string | null;
+  readonly total_saved: string;
+  readonly revenue_attributed: string;
+}
+
+export interface CouponPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly Coupon[];
+}
+
+export interface CreateCouponInput {
+  readonly code: string;
+  readonly discount: number;
+  readonly type: 'percentage' | 'fixed';
+  readonly maxUses?: number;
+  readonly maxUsesPerCustomer?: number;
+  readonly minInvoicePrice?: number;
+  /** YYYY-MM-DD */
+  readonly expirationDate?: string;
+}
+
 export interface InvoiceItem {
   readonly product: { readonly name: string } | null;
   readonly variant: { readonly name: string | null } | null;

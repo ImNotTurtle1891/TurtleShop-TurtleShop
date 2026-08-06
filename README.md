@@ -22,6 +22,9 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/order refund <id>` | Mark an order as refunded (does not move money — process the actual refund with your payment provider). |
 | `/order cancel <id>` | Mark an order as cancelled. |
 | `/order resend-email <id> [email]` | Resend the order confirmation email, optionally to a different address. |
+| `/coupon list [page]` | List coupons with discount, usage counts, total savings, and expiry. |
+| `/coupon create <code> <discount> <type> [...]` | Create an all-products coupon. Optional: max uses, uses per customer, minimum order value, expiry in days. |
+| `/coupon delete <code>` | Delete a coupon. The code option autocompletes from your live coupons. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 

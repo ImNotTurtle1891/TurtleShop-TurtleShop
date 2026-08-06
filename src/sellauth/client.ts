@@ -1,5 +1,8 @@
 import type {
   AnalyticsSummary,
+  Coupon,
+  CouponPage,
+  CreateCouponInput,
   CustomerPage,
   CustomerSummary,
   DateRange,
@@ -123,6 +126,36 @@ export class SellAuthClient {
     );
   }
 
+  public async getCoupons(page: number, perPage: number): Promise<CouponPage> {
+    return this.get<CouponPage>('/coupons', { page: String(page), perPage: String(perPage) });
+  }
+
+  public async createCoupon(input: CreateCouponInput): Promise<Coupon> {
+    const body: Record<string, unknown> = {
+      code: input.code,
+      global: true,
+      discount: input.discount,
+      type: input.type
+    };
+    if (input.maxUses !== undefined) {
+      body['max_uses'] = input.maxUses;
+    }
+    if (input.maxUsesPerCustomer !== undefined) {
+      body['max_uses_per_customer'] = input.maxUsesPerCustomer;
+    }
+    if (input.minInvoicePrice !== undefined) {
+      body['min_invoice_price'] = input.minInvoicePrice;
+    }
+    if (input.expirationDate !== undefined) {
+      body['expiration_date'] = input.expirationDate;
+    }
+    return this.request<Coupon>('POST', '/coupons', { body });
+  }
+
+  public async deleteCoupon(couponId: number): Promise<void> {
+    await this.request('DELETE', `/coupons/${couponId}`);
+  }
+
   public async findCustomerByEmail(email: string): Promise<CustomerSummary | null> {
     const page = await this.get<CustomerPage>('/customers', { email });
     return page.data[0] ?? null;
@@ -145,11 +178,11 @@ export class SellAuthClient {
   }
 
   private async request<T>(
-    method: 'GET' | 'POST' | 'PUT',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     path: string,
     options: {
       query?: QueryParams | undefined;
-      body?: Readonly<Record<string, string>> | undefined;
+      body?: Readonly<Record<string, unknown>> | undefined;
     } = {}
   ): Promise<T> {
     const url = new URL(`${this.baseUrl}/shops/${this.shopId}${path}`);
