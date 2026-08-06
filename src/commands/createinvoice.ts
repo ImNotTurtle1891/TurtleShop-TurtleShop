@@ -7,36 +7,13 @@ import {
 } from 'discord.js';
 import { formatPrice, truncate } from '../lib/format.js';
 import { SellAuthApiError } from '../sellauth/client.js';
-import type { CheckoutSession, CreateCheckoutInput, ProductSummary } from '../sellauth/types.js';
-import { cachedProducts } from './product.js';
+import type { CheckoutSession, CreateCheckoutInput } from '../sellauth/types.js';
+import { cachedProducts, resolveVariantChoice, variantChoices, type VariantChoice } from './product.js';
 import { EMBED_COLOR, type Command, type CommandContext } from './types.js';
 
 const MAX_AUTOCOMPLETE_CHOICES = 25;
 const MAX_CHOICE_NAME_LENGTH = 100;
-const PRODUCT_VALUE_PATTERN = /^(\d+):(\d+)$/;
 const DEFAULT_CURRENCY = 'USD';
-
-interface VariantChoice {
-  readonly product: ProductSummary;
-  readonly variantId: number;
-  readonly label: string;
-}
-
-function variantChoices(products: readonly ProductSummary[]): VariantChoice[] {
-  const choices: VariantChoice[] = [];
-  for (const product of products) {
-    for (const variant of product.variants) {
-      const name =
-        variant.name === null || product.variants.length === 1
-          ? product.name
-          : `${product.name} (${variant.name})`;
-      const price = Number(variant.price ?? product.price);
-      const priceLabel = Number.isFinite(price) ? ` \u00B7 ${formatPrice(price, product.currency)}` : '';
-      choices.push({ product, variantId: variant.id, label: `${name}${priceLabel}` });
-    }
-  }
-  return choices;
-}
 
 async function createSession(
   interaction: ChatInputCommandInteraction,
@@ -83,20 +60,7 @@ async function handleProduct(
   const coupon = interaction.options.getString('coupon')?.trim();
 
   const products = await cachedProducts(context);
-  const idMatch = PRODUCT_VALUE_PATTERN.exec(input);
-
-  let choice: VariantChoice | undefined;
-  if (idMatch !== null) {
-    const productId = Number(idMatch[1]);
-    const variantId = Number(idMatch[2]);
-    choice = variantChoices(products).find(
-      (candidate) => candidate.product.id === productId && candidate.variantId === variantId
-    );
-  } else {
-    choice = variantChoices(products).find((candidate) =>
-      candidate.label.toLowerCase().includes(input.toLowerCase())
-    );
-  }
+  const choice: VariantChoice | undefined = resolveVariantChoice(input, products);
 
   if (choice === undefined) {
     await interaction.editReply({ content: `No product found matching "${input}".` });

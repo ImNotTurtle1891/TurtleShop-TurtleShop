@@ -46,6 +46,7 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners — r
 | `/ticket view <id>` | A ticket with its recent messages. The ID option autocompletes by subject and customer. |
 | `/ticket reply <id> <message>` | Send a message to a ticket as the shop. |
 | `/ticket close <id>` / `/ticket reopen <id>` | Close or reopen a ticket. |
+| `/restock <product>` | Add serial keys to a serial-key product. The bot prompts you to send the keys in your next message (comma- or newline-separated, or a `.txt` attachment), adds them to the stock, then deletes your message. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 
@@ -98,14 +99,15 @@ Notes:
 
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications) and click **New Application**.
 2. On the **Bot** tab, click **Reset Token** and copy the token — this is your `DISCORD_TOKEN`.
-3. On the **General Information** tab, copy the **Application ID** — this is your `DISCORD_CLIENT_ID`.
-4. Invite the bot to your server using this URL (replace `YOUR_CLIENT_ID`):
+3. Still on the **Bot** tab, enable the **Message Content Intent** under *Privileged Gateway Intents* — `/restock` needs it to read the message containing your keys. Without it the bot refuses to log in.
+4. On the **General Information** tab, copy the **Application ID** — this is your `DISCORD_CLIENT_ID`.
+5. Invite the bot to your server using this URL (replace `YOUR_CLIENT_ID`):
 
 ```
-https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot+applications.commands&permissions=268435456
+https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot+applications.commands&permissions=268443648
 ```
 
-The `permissions=268435456` part grants **Manage Roles**, which is needed for the order-claim feature to assign the customer role.
+The `permissions=268443648` part grants **Manage Roles** (needed by the order-claim feature to assign the customer role) and **Manage Messages** (needed by `/restock` to delete the message containing your keys after they are added).
 
 ### 2. Get your SellAuth credentials
 

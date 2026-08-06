@@ -33,6 +33,57 @@ export async function cachedProducts(context: CommandContext): Promise<readonly 
   return firstPage.data;
 }
 
+export const PRODUCT_VARIANT_VALUE_PATTERN = /^(\d+):(\d+)$/;
+
+export interface VariantChoice {
+  readonly product: ProductSummary;
+  readonly variantId: number;
+  readonly variantName: string | null;
+  readonly label: string;
+}
+
+/** One autocomplete choice per product variant, labeled "Product (Variant) · $price". */
+export function variantChoices(products: readonly ProductSummary[]): VariantChoice[] {
+  const choices: VariantChoice[] = [];
+  for (const product of products) {
+    for (const variant of product.variants) {
+      const name =
+        variant.name === null || product.variants.length === 1
+          ? product.name
+          : `${product.name} (${variant.name})`;
+      const price = Number(variant.price ?? product.price);
+      const priceLabel = Number.isFinite(price)
+        ? ` \u00B7 ${formatPrice(price, product.currency)}`
+        : '';
+      choices.push({
+        product,
+        variantId: variant.id,
+        variantName: variant.name,
+        label: `${name}${priceLabel}`
+      });
+    }
+  }
+  return choices;
+}
+
+/** Resolves a "productId:variantId" autocomplete value or free-text label search. */
+export function resolveVariantChoice(
+  input: string,
+  products: readonly ProductSummary[]
+): VariantChoice | undefined {
+  const idMatch = PRODUCT_VARIANT_VALUE_PATTERN.exec(input);
+  if (idMatch !== null) {
+    const productId = Number(idMatch[1]);
+    const variantId = Number(idMatch[2]);
+    return variantChoices(products).find(
+      (candidate) => candidate.product.id === productId && candidate.variantId === variantId
+    );
+  }
+  return variantChoices(products).find((candidate) =>
+    candidate.label.toLowerCase().includes(input.toLowerCase())
+  );
+}
+
 function variantStockLabel(stock: number | null): string {
   if (stock === null || stock === UNLIMITED_STOCK) {
     return '\u221E';

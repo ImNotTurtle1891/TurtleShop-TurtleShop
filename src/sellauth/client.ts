@@ -109,6 +109,23 @@ export class SellAuthClient {
     return this.get<ProductDetail>(`/products/${productId}`);
   }
 
+  /** Returns the undelivered serial keys of a serials-type product variant. */
+  public async getDeliverables(productId: number, variantId: number): Promise<readonly string[]> {
+    const result = await this.get<unknown>(`/products/${productId}/deliverables/${variantId}`);
+    // Non-serials products return an empty object instead of an array.
+    return Array.isArray(result) ? (result as readonly string[]) : [];
+  }
+
+  public async appendDeliverables(
+    productId: number,
+    variantId: number,
+    deliverables: readonly string[]
+  ): Promise<void> {
+    await this.request('PUT', `/products/${productId}/deliverables/append/${variantId}`, {
+      body: { deliverables }
+    });
+  }
+
   /** Accepts either the numeric invoice ID or the customer-facing unique ID. */
   public async getInvoice(invoiceId: string): Promise<Invoice> {
     return this.get<Invoice>(`/invoices/${encodeURIComponent(invoiceId)}`);

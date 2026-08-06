@@ -39,7 +39,14 @@ const commandsByName = new Map<string, Command>(
   commands.map((command) => [command.data.name, command])
 );
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+// GuildMessages + MessageContent are needed by /restock to read the keys message.
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
+});
 
 function userFacingErrorMessage(error: unknown): string {
   if (error instanceof SellAuthApiError) {
@@ -171,4 +178,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-void client.login(config.discordToken);
+client.login(config.discordToken).catch((error: unknown) => {
+  if (error instanceof Error && error.message.includes('disallowed intents')) {
+    console.error(
+      'Discord rejected the login because a privileged intent is not enabled.\n' +
+        'Open https://discord.com/developers/applications -> your application -> Bot,\n' +
+        'and enable "Message Content Intent" (required by /restock). Then start the bot again.'
+    );
+    process.exit(1);
+  }
+  throw error;
+});

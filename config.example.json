@@ -27,6 +27,7 @@
     "blacklist": "admin",
     "blacklist check": "support",
     "createinvoice": "support",
+    "restock": "admin",
     "feedback": "support",
     "ticket": "support"
   },

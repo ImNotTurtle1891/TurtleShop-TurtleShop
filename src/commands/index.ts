@@ -10,6 +10,7 @@ import { orderCommand } from './order.js';
 import { productCommand } from './product.js';
 import { productsCommand } from './products.js';
 import { redeemOrderCommand } from './redeemorder.js';
+import { restockCommand } from './restock.js';
 import { statsCommand } from './stats.js';
 import { ticketCommand } from './ticket.js';
 import { topCommand } from './top.js';
@@ -30,5 +31,6 @@ export const commands: readonly Command[] = [
   blacklistCommand,
   createInvoiceCommand,
   feedbackCommand,
-  ticketCommand
+  ticketCommand,
+  restockCommand
 ];

@@ -59,6 +59,8 @@ export interface ProductSummary {
   readonly price: string | null;
   readonly currency: string;
   readonly visibility: string;
+  /** How the product is delivered: serials, service, files, dynamic, or physical. */
+  readonly deliverables_type: string | null;
   /** -1 means unlimited stock. */
   readonly stock_count: number | null;
   readonly variants: readonly ProductVariant[];
