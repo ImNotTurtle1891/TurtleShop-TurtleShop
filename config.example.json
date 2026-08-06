@@ -21,7 +21,8 @@
     "coupon": "admin",
     "blacklist": "admin",
     "blacklist check": "support",
-    "createinvoice": "support"
+    "createinvoice": "support",
+    "feedback": "support"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

@@ -146,6 +146,47 @@ export interface CheckoutSession {
   readonly url: string;
 }
 
+export interface FeedbackListItem {
+  readonly id: number;
+  readonly status: string;
+  readonly message: string | null;
+  readonly rating: number;
+  readonly is_automatic: boolean;
+  readonly reply: string | null;
+  readonly created_at: string;
+  readonly invoice: {
+    readonly unique_id: string;
+    readonly email: string | null;
+    readonly items: readonly InvoiceItem[];
+  } | null;
+}
+
+export interface FeedbackPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly FeedbackListItem[];
+}
+
+export interface FeedbackStats {
+  readonly total: number;
+  readonly published: number;
+  readonly pending_disputes: number;
+  readonly replied: number;
+  readonly automatic: number;
+  readonly reply_rate: number;
+  readonly average_rating: number;
+  readonly by_rating: Readonly<Record<string, number>>;
+}
+
+export interface FeedbackListQuery {
+  readonly page: number;
+  readonly perPage: number;
+  readonly rating?: number;
+  /** Only customer-written feedbacks (excludes automatic ones). */
+  readonly writtenOnly?: boolean;
+}
+
 export interface BlacklistEntry {
   readonly id: number;
   readonly type: string;

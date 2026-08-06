@@ -31,6 +31,9 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/blacklist check <value>` | Check whether a value is blacklisted and why (support-level by default). |
 | `/createinvoice product <product> [...]` | Create an invoice for a catalog product and get a checkout link. The product option autocompletes with variants and prices. Optional: quantity, customer email, coupon. |
 | `/createinvoice custom <name> <price> [...]` | Create an invoice for a one-off charge that is not in your catalog. Optional: currency, quantity, customer email, coupon. Requires a SellAuth plan with the Checkout API feature. |
+| `/feedback recent [page] [rating] [written]` | Recent reviews, newest first. Filter by star rating or to customer-written reviews only. |
+| `/feedback stats` | Rating breakdown with per-star bars, average, and reply rate. |
+| `/feedback reply <id> <message>` | Post a public reply to a review (the ID is shown in `/feedback recent`). |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 

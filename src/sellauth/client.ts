@@ -11,6 +11,9 @@ import type {
   CustomerPage,
   CustomerSummary,
   DateRange,
+  FeedbackListQuery,
+  FeedbackPage,
+  FeedbackStats,
   Invoice,
   InvoicePage,
   ProductDetail,
@@ -174,6 +177,30 @@ export class SellAuthClient {
 
   public async deleteBlacklistEntry(entryId: number): Promise<void> {
     await this.request('DELETE', `/blacklist/${entryId}`);
+  }
+
+  public async getFeedbacks(query: FeedbackListQuery): Promise<FeedbackPage> {
+    const params: Record<string, string> = {
+      page: String(query.page),
+      perPage: String(query.perPage),
+      orderColumn: 'created_at',
+      orderDirection: 'desc'
+    };
+    if (query.rating !== undefined) {
+      params['rating'] = String(query.rating);
+    }
+    if (query.writtenOnly === true) {
+      params['is_automatic'] = '0';
+    }
+    return this.get<FeedbackPage>('/feedbacks', params);
+  }
+
+  public async getFeedbackStats(): Promise<FeedbackStats> {
+    return this.get<FeedbackStats>('/feedbacks/stats');
+  }
+
+  public async replyToFeedback(feedbackId: number, reply: string): Promise<void> {
+    await this.request('POST', `/feedbacks/${feedbackId}/reply`, { body: { reply } });
   }
 
   public async getCoupons(page: number, perPage: number): Promise<CouponPage> {

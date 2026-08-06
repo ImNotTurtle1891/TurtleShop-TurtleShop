@@ -5,6 +5,7 @@ import { commandsCommand } from './commands.js';
 import { couponCommand } from './coupon.js';
 import { createInvoiceCommand } from './createinvoice.js';
 import { customerCommand } from './customer.js';
+import { feedbackCommand } from './feedback.js';
 import { orderCommand } from './order.js';
 import { productCommand } from './product.js';
 import { productsCommand } from './products.js';
@@ -26,5 +27,6 @@ export const commands: readonly Command[] = [
   orderCommand,
   couponCommand,
   blacklistCommand,
-  createInvoiceCommand
+  createInvoiceCommand,
+  feedbackCommand
 ];
