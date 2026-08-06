@@ -123,6 +123,29 @@ export interface CreateCouponInput {
   readonly expirationDate?: string;
 }
 
+export interface BlacklistEntry {
+  readonly id: number;
+  readonly type: string;
+  readonly match_type: string;
+  readonly value: string;
+  readonly reason: string | null;
+  readonly enabled: boolean;
+  readonly created_at: string;
+}
+
+export interface BlacklistPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly BlacklistEntry[];
+}
+
+export interface CreateBlacklistEntryInput {
+  readonly value: string;
+  readonly type: string;
+  readonly reason?: string;
+}
+
 export interface InvoiceItem {
   readonly product: { readonly name: string } | null;
   readonly variant: { readonly name: string | null } | null;

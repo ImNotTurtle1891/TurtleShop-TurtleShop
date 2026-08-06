@@ -25,6 +25,10 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/coupon list [page]` | List coupons with discount, usage counts, total savings, and expiry. |
 | `/coupon create <code> <discount> <type> [...]` | Create an all-products coupon. Optional: max uses, uses per customer, minimum order value, expiry in days. |
 | `/coupon delete <code>` | Delete a coupon. The code option autocompletes from your live coupons. |
+| `/blacklist list [page]` | List blacklist entries with type, reason, and date. |
+| `/blacklist add <type> <value> [reason]` | Block an email, email domain, Discord ID, IP, IP range, country, city, ISP, ASN, or user agent. |
+| `/blacklist remove <value>` | Remove a blacklist entry. Autocompletes from your live blacklist. |
+| `/blacklist check <value>` | Check whether a value is blacklisted and why (support-level by default). |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 

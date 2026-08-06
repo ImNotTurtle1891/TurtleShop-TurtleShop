@@ -18,7 +18,9 @@
     "order complete": "admin",
     "order refund": "admin",
     "order cancel": "admin",
-    "coupon": "admin"
+    "coupon": "admin",
+    "blacklist": "admin",
+    "blacklist check": "support"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

@@ -1,6 +1,9 @@
 import type {
   AnalyticsSummary,
+  BlacklistEntry,
+  BlacklistPage,
   Coupon,
+  CreateBlacklistEntryInput,
   CouponPage,
   CreateCouponInput,
   CustomerPage,
@@ -124,6 +127,37 @@ export class SellAuthClient {
       `/invoices/${invoiceId}/resend-email`,
       email === undefined ? {} : { body: { email } }
     );
+  }
+
+  public async getBlacklist(
+    page: number,
+    perPage: number,
+    value?: string
+  ): Promise<BlacklistPage> {
+    const params: Record<string, string> = {
+      page: String(page),
+      perPage: String(perPage)
+    };
+    if (value !== undefined) {
+      params['value'] = value;
+    }
+    return this.get<BlacklistPage>('/blacklist', params);
+  }
+
+  public async createBlacklistEntry(input: CreateBlacklistEntryInput): Promise<BlacklistEntry> {
+    const body: Record<string, unknown> = {
+      value: input.value,
+      type: input.type,
+      match_type: 'exact'
+    };
+    if (input.reason !== undefined) {
+      body['reason'] = input.reason;
+    }
+    return this.request<BlacklistEntry>('POST', '/blacklist', { body });
+  }
+
+  public async deleteBlacklistEntry(entryId: number): Promise<void> {
+    await this.request('DELETE', `/blacklist/${entryId}`);
   }
 
   public async getCoupons(page: number, perPage: number): Promise<CouponPage> {
