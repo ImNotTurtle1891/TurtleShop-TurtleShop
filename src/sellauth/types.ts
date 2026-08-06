@@ -270,6 +270,24 @@ export interface CustomerPage {
   readonly data: readonly CustomerSummary[];
 }
 
+export interface BalanceTransaction {
+  readonly id: string;
+  /** incoming or outgoing. */
+  readonly type: string;
+  readonly description: string | null;
+  readonly invoice_id: number | null;
+  readonly amount: string;
+  readonly currency: string;
+  readonly created_at: string;
+}
+
+export interface BalanceTransactionPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly BalanceTransaction[];
+}
+
 export interface InvoiceListItem {
   readonly id: number;
   readonly unique_id: string;
@@ -288,12 +306,13 @@ export interface InvoicePage {
 }
 
 export interface InvoiceDetailItem extends InvoiceItem {
+  readonly id: number;
   readonly product_id: number;
   readonly custom_name: string | null;
   readonly quantity: number;
   readonly price: string | null;
-  /** Delivered serials/keys. Contents are sensitive — only ever show the count. */
-  readonly delivered: readonly string[] | null;
+  /** Delivered serials/keys (a single string for some delivery types). Sensitive — never display the values. */
+  readonly delivered: readonly string[] | string | null;
 }
 
 export interface InvoiceCustomer {

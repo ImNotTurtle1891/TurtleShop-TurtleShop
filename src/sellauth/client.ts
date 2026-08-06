@@ -6,6 +6,7 @@ import type {
   AffiliateStats,
   AffiliateTier,
   AnalyticsSummary,
+  BalanceTransactionPage,
   BlacklistEntry,
   BlacklistPage,
   LatestNotifications,
@@ -350,6 +351,52 @@ export class SellAuthClient {
 
   public async deleteCoupon(couponId: number): Promise<void> {
     await this.request('DELETE', `/coupons/${couponId}`);
+  }
+
+  /**
+   * Replaces delivered entries of an invoice item. Keys of `replacements` are
+   * zero-based indexes into the item's delivered array; the special value
+   * "STOCK" pulls a fresh serial from the product's stock.
+   */
+  public async replaceDelivered(
+    invoiceId: number,
+    invoiceItemId: number,
+    replacements: Readonly<Record<number, string>>
+  ): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/replace-delivered`, {
+      body: { invoice_item_id: invoiceItemId, replacements }
+    });
+  }
+
+  /** Calls the dynamic delivery endpoint of an invoice item again. */
+  public async redoDynamicDelivery(invoiceId: number, invoiceItemId: number): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/redo-dynamic-delivery`, {
+      body: { invoice_item_id: invoiceItemId }
+    });
+  }
+
+  /** Adds (positive) or deducts (negative) customer balance. Range: -1000 to 1000. */
+  public async editCustomerBalance(
+    customerId: number,
+    amount: number,
+    description?: string
+  ): Promise<void> {
+    const body: Record<string, unknown> = { amount };
+    if (description !== undefined) {
+      body['description'] = description;
+    }
+    await this.request('PUT', `/customers/${customerId}/balance`, { body });
+  }
+
+  public async getCustomerBalanceTransactions(
+    customerId: number,
+    page: number,
+    perPage: number
+  ): Promise<BalanceTransactionPage> {
+    return this.get<BalanceTransactionPage>(`/customers/${customerId}/balance-transactions`, {
+      page: String(page),
+      perPage: String(perPage)
+    });
   }
 
   public async findCustomerByEmail(email: string): Promise<CustomerSummary | null> {

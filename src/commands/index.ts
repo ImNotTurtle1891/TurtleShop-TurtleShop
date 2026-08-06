@@ -1,6 +1,7 @@
 import { activityCommand } from './activity.js';
 import { affiliateCommand } from './affiliate.js';
 import { analyticsCommand } from './analytics.js';
+import { balanceCommand } from './balance.js';
 import { blacklistCommand } from './blacklist.js';
 import { claimOrderEmbedCommand } from './claimorder-embed.js';
 import { commandsCommand } from './commands.js';
@@ -48,5 +49,6 @@ export const commands: readonly Command[] = [
   notificationsCommand,
   activityCommand,
   affiliateCommand,
-  resellerCommand
+  resellerCommand,
+  balanceCommand
 ];

@@ -36,6 +36,10 @@ Restocking a product with `/restock` — paste the keys (or attach a `.txt`), an
 | `/order archive <id>` / `/order unarchive <id>` | Archive or unarchive an order. |
 | `/order reverse-cashback <id>` | Reverse the cashback a customer earned on an order (e.g. after a chargeback). |
 | `/order reverse-affiliate-commission <id>` | Reverse the affiliate commission earned on an order. |
+| `/order replace-delivered <id> <old> [new]` | Replace a bad delivered key: paste the key the customer received, and either provide the replacement or leave it empty to pull a fresh one from stock (serial-key products). |
+| `/order redo-delivery <id> [item]` | Re-run dynamic delivery for an order item — the "customer didn't get access" fix for dynamic products. |
+| `/balance view <email> [page]` | A customer's store credit and their balance transaction history. |
+| `/balance add <email> <amount> [reason]` / `/balance remove <email> <amount> [reason]` | Add or deduct store credit (max 1000 per adjustment). The reason shows up in the ledger. |
 | `/coupon list [page]` | List coupons with discount, usage counts, total savings, and expiry. |
 | `/coupon create <code> <discount> <type> [...]` | Create an all-products coupon. Optional: max uses, uses per customer, minimum order value, expiry in days. |
 | `/coupon delete <code>` | Delete a coupon. The code option autocompletes from your live coupons. |

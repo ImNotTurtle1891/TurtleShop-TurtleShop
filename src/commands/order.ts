@@ -45,6 +45,14 @@ async function resolveItemName(item: InvoiceDetailItem, context: CommandContext)
   }
 }
 
+/** Normalizes the delivered field, which can be an array, a single string, or null. */
+function deliveredEntries(item: InvoiceDetailItem): readonly string[] {
+  if (item.delivered === null) {
+    return [];
+  }
+  return typeof item.delivered === 'string' ? [item.delivered] : item.delivered;
+}
+
 async function itemLine(
   item: InvoiceDetailItem,
   currency: string,
@@ -53,7 +61,7 @@ async function itemLine(
   const name = truncate(await resolveItemName(item, context), MAX_ITEM_NAME_LENGTH);
   const amount = Number(item.price);
   const priceLabel = Number.isFinite(amount) ? ` \u00B7 ${formatPrice(amount, currency)}` : '';
-  const deliveredCount = item.delivered?.length ?? 0;
+  const deliveredCount = deliveredEntries(item).length;
   const deliveredLabel = deliveredCount > 0 ? ` \u00B7 ${deliveredCount} delivered` : '';
   return `${item.quantity}\u00D7 **${name}**${priceLabel}${deliveredLabel}`;
 }
@@ -397,6 +405,40 @@ export const orderCommand: Command = {
           .setName('reverse-affiliate-commission')
           .setDescription('Reverse the affiliate commission earned on an order')
       )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand
+          .setName('replace-delivered')
+          .setDescription('Replace a delivered key with a new one (e.g. the key was bad)')
+      )
+        .addStringOption((option) =>
+          option
+            .setName('old')
+            .setDescription('The delivered key to replace, exactly as the customer received it')
+            .setRequired(true)
+            .setMaxLength(512)
+        )
+        .addStringOption((option) =>
+          option
+            .setName('new')
+            .setDescription('The replacement key (leave empty to pull a fresh one from stock)')
+            .setRequired(false)
+            .setMaxLength(512)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand
+          .setName('redo-delivery')
+          .setDescription('Re-run dynamic delivery for an order item')
+      ).addIntegerOption((option) =>
+        option
+          .setName('item')
+          .setDescription('Which item (only needed when the order has several)')
+          .setRequired(false)
+          .setMinValue(1)
+      )
     ),
 
   async execute(
@@ -444,6 +486,16 @@ export const orderCommand: Command = {
       return;
     }
 
+    if (subcommand === 'replace-delivered') {
+      await handleReplaceDelivered(interaction, context, invoice);
+      return;
+    }
+
+    if (subcommand === 'redo-delivery') {
+      await handleRedoDelivery(interaction, context, invoice);
+      return;
+    }
+
     const action = ORDER_ACTIONS[subcommand];
     if (action === undefined) {
       await interaction.editReply({ content: 'Unknown subcommand.' });
@@ -470,6 +522,123 @@ export const orderCommand: Command = {
     });
   }
 };
+
+/** The dashboard's magic value: replace with a fresh serial from product stock. */
+const REPLACE_FROM_STOCK = 'STOCK';
+
+async function handleReplaceDelivered(
+  interaction: ChatInputCommandInteraction,
+  context: CommandContext,
+  invoice: Invoice
+): Promise<void> {
+  const oldKey = interaction.options.getString('old', true).trim();
+  const newKey = interaction.options.getString('new')?.trim();
+
+  let targetItem: InvoiceDetailItem | undefined;
+  let deliveredIndex = -1;
+  for (const item of invoice.items) {
+    const index = deliveredEntries(item).findIndex((entry) => entry.trim() === oldKey);
+    if (index !== -1) {
+      targetItem = item;
+      deliveredIndex = index;
+      break;
+    }
+  }
+  if (targetItem === undefined) {
+    const deliveredCount = invoice.items.reduce((sum, item) => sum + deliveredEntries(item).length, 0);
+    await interaction.editReply({
+      content: `That key is not among the ${deliveredCount} delivered entries of order \`${invoice.unique_id}\`. Paste it exactly as the customer received it.`
+    });
+    return;
+  }
+
+  if (newKey === undefined || newKey === '') {
+    // Stock replacement only works for serial-key products.
+    let deliverablesType: string | null = null;
+    try {
+      deliverablesType = (await context.sellAuth.getProduct(targetItem.product_id)).deliverables_type;
+    } catch {
+      deliverablesType = null;
+    }
+    if (deliverablesType !== 'serials') {
+      await interaction.editReply({
+        content:
+          'Replacing from stock only works for serial-key products. Provide the replacement with the `new` option instead.'
+      });
+      return;
+    }
+  }
+
+  const itemName = truncate(await resolveItemName(targetItem, context), MAX_ITEM_NAME_LENGTH);
+  try {
+    await context.sellAuth.replaceDelivered(invoice.id, targetItem.id, {
+      [deliveredIndex]: newKey === undefined || newKey === '' ? REPLACE_FROM_STOCK : newKey
+    });
+  } catch (error) {
+    await replyWithApiError(interaction, error, 'replace the delivered key');
+    return;
+  }
+
+  await interaction.editReply({
+    content:
+      newKey === undefined || newKey === ''
+        ? `The bad key on **${itemName}** (order \`${invoice.unique_id}\`) was replaced with a fresh one from stock. The customer sees the new key on their order page — use \`/order resend-email ${invoice.unique_id}\` to notify them.`
+        : `The bad key on **${itemName}** (order \`${invoice.unique_id}\`) was replaced with the provided key. The customer sees it on their order page — use \`/order resend-email ${invoice.unique_id}\` to notify them.`
+  });
+}
+
+async function handleRedoDelivery(
+  interaction: ChatInputCommandInteraction,
+  context: CommandContext,
+  invoice: Invoice
+): Promise<void> {
+  if (invoice.items.length === 0) {
+    await interaction.editReply({ content: `Order \`${invoice.unique_id}\` has no items.` });
+    return;
+  }
+
+  const itemNumber = interaction.options.getInteger('item');
+  let targetItem: InvoiceDetailItem | undefined;
+  if (itemNumber !== null) {
+    targetItem = invoice.items[itemNumber - 1];
+    if (targetItem === undefined) {
+      await interaction.editReply({
+        content: `Order \`${invoice.unique_id}\` has ${invoice.items.length} item(s) — there is no item ${itemNumber}.`
+      });
+      return;
+    }
+  } else if (invoice.items.length === 1) {
+    targetItem = invoice.items[0];
+  } else {
+    const lines = await Promise.all(
+      invoice.items.map(
+        async (item, index) =>
+          `**${index + 1}.** ${truncate(await resolveItemName(item, context), MAX_ITEM_NAME_LENGTH)}`
+      )
+    );
+    await interaction.editReply({
+      content: `This order has multiple items — run the command again with the \`item\` option:\n${lines.join('\n')}`
+    });
+    return;
+  }
+
+  if (targetItem === undefined) {
+    await interaction.editReply({ content: 'Could not determine the order item.' });
+    return;
+  }
+
+  const itemName = truncate(await resolveItemName(targetItem, context), MAX_ITEM_NAME_LENGTH);
+  try {
+    await context.sellAuth.redoDynamicDelivery(invoice.id, targetItem.id);
+  } catch (error) {
+    await replyWithApiError(interaction, error, 're-run the dynamic delivery');
+    return;
+  }
+
+  await interaction.editReply({
+    content: `Dynamic delivery was re-run for **${itemName}** on order \`${invoice.unique_id}\`. The delivery endpoint generated a fresh result for the customer.`
+  });
+}
 
 async function replyWithApiError(
   interaction: ChatInputCommandInteraction,
