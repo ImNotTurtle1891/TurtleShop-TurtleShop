@@ -27,6 +27,7 @@ import { subscriptionCommand } from './subscription.js';
 import { ticketCommand } from './ticket.js';
 import { topCommand } from './top.js';
 import { trafficCommand } from './traffic.js';
+import { webhookLogsCommand } from './webhooklogs.js';
 import { whitelistCommand } from './whitelist.js';
 import type { Command } from './types.js';
 
@@ -60,5 +61,6 @@ export const commands: readonly Command[] = [
   subscriptionCommand,
   setStockCommand,
   productVisibilityCommand,
-  abandonedCommand
+  abandonedCommand,
+  webhookLogsCommand
 ];

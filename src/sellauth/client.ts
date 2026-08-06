@@ -23,6 +23,7 @@ import type {
   TrafficStats,
   TrafficUtmBreakdown,
   UpdateCouponInput,
+  WebhookLogPage,
   WhitelistEntry,
   WhitelistPage,
   CheckoutSession,
@@ -480,6 +481,34 @@ export class SellAuthClient {
 
   public async cancelFeedbackDispute(feedbackId: number): Promise<void> {
     await this.request('POST', `/feedbacks/${feedbackId}/cancel-dispute`);
+  }
+
+  /** Deletes every automatic (system-generated) feedback. Irreversible. */
+  public async deleteAutomaticFeedbacks(): Promise<void> {
+    await this.request('POST', '/feedbacks/delete-automatic');
+  }
+
+  public async getWebhookLogs(options: {
+    readonly page: number;
+    readonly perPage: number;
+    readonly failedOnly?: boolean;
+    readonly source?: 'notification' | 'dynamic_delivery';
+    readonly invoiceId?: string;
+  }): Promise<WebhookLogPage> {
+    const params: Record<string, string> = {
+      page: String(options.page),
+      perPage: String(options.perPage)
+    };
+    if (options.failedOnly === true) {
+      params['success'] = '0';
+    }
+    if (options.source !== undefined) {
+      params['source'] = options.source;
+    }
+    if (options.invoiceId !== undefined) {
+      params['invoice_id'] = options.invoiceId;
+    }
+    return this.get<WebhookLogPage>('/webhook-logs', params);
   }
 
   /** Full update - the API replaces all listed fields, so pass merged values. */

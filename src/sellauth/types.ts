@@ -460,6 +460,29 @@ export interface AbandonedCheckoutStats {
   readonly dismissed_count: number;
 }
 
+export interface WebhookLogEntry {
+  readonly id: number;
+  /** notification or dynamic_delivery. */
+  readonly source: string;
+  readonly event: string;
+  readonly invoice_id: number | null;
+  /** May contain secrets in the query string — always redact before display. */
+  readonly url: string;
+  readonly response_status: number | null;
+  readonly success: boolean;
+  readonly error_type: string | null;
+  readonly error_message: string | null;
+  readonly duration_ms: number | null;
+  readonly created_at: string;
+}
+
+export interface WebhookLogPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly WebhookLogEntry[];
+}
+
 export interface PaymentMethod {
   readonly id: number;
   readonly type: string;

@@ -188,6 +188,17 @@ export const feedbackCommand: Command = {
         .addIntegerOption((option) =>
           option.setName('id').setDescription('The feedback ID').setRequired(true).setMinValue(1)
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('purge-automatic')
+        .setDescription('Delete ALL automatic (system-generated) feedbacks — irreversible')
+        .addBooleanOption((option) =>
+          option
+            .setName('confirm')
+            .setDescription('Set to True to confirm the deletion')
+            .setRequired(true)
+        )
     ),
 
   async execute(
@@ -211,6 +222,9 @@ export const feedbackCommand: Command = {
         return;
       case 'cancel-dispute':
         await handleCancelDispute(interaction, context);
+        return;
+      case 'purge-automatic':
+        await handlePurgeAutomatic(interaction, context);
         return;
       default:
         await interaction.editReply({ content: 'Unknown subcommand.' });
@@ -241,6 +255,39 @@ async function handleDispute(
 
   await interaction.editReply({
     content: `Feedback \`${id}\` has been disputed — SellAuth staff will review it. Reason:\n> ${truncate(reason, 500)}`
+  });
+}
+
+async function handlePurgeAutomatic(
+  interaction: ChatInputCommandInteraction,
+  context: CommandContext
+): Promise<void> {
+  const stats = await context.sellAuth.getFeedbackStats();
+  if (stats.automatic === 0) {
+    await interaction.editReply({ content: 'There are no automatic feedbacks to delete.' });
+    return;
+  }
+
+  if (!interaction.options.getBoolean('confirm', true)) {
+    await interaction.editReply({
+      content: `This would permanently delete **${formatCount(stats.automatic)}** automatic feedback(s). Run the command again with \`confirm: True\` to proceed.`
+    });
+    return;
+  }
+
+  try {
+    await context.sellAuth.deleteAutomaticFeedbacks();
+  } catch (error) {
+    if (error instanceof SellAuthApiError) {
+      const reason = error.apiMessage ?? `the SellAuth API responded with HTTP ${error.status}`;
+      await interaction.editReply({ content: `Could not delete the automatic feedbacks: ${reason}` });
+      return;
+    }
+    throw error;
+  }
+
+  await interaction.editReply({
+    content: `Deleted **${formatCount(stats.automatic)}** automatic feedback(s). Customer-written reviews were not touched.`
   });
 }
 

@@ -54,7 +54,8 @@
     "subscription": "admin",
     "setstock": "admin",
     "product-visibility": "admin",
-    "abandoned": "admin"
+    "abandoned": "admin",
+    "webhooklogs": "admin"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

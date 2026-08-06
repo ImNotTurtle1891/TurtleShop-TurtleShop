@@ -8,7 +8,7 @@ Restocking a product with `/restock` — paste the keys (or attach a `.txt`), an
 
 ![Restocking a product with /restock](https://i.imgur.com/Yfmi89w.gif)
 
-## Commands (Total: 92)
+## Commands (Total: 94)
 
 | Command | Description |
 | --- | --- |
@@ -56,6 +56,7 @@ Restocking a product with `/restock` — paste the keys (or attach a `.txt`), an
 | `/feedback stats` | Rating breakdown with per-star bars, average, and reply rate. |
 | `/feedback reply <id> <message>` | Post a public reply to a review (the ID is shown in `/feedback recent`). |
 | `/feedback dispute <id> <reason>` / `/feedback cancel-dispute <id>` | Flag an unfair review for SellAuth staff review, or withdraw the dispute. |
+| `/feedback purge-automatic <confirm>` | Permanently delete all automatic (system-generated) feedbacks. Customer-written reviews are kept. |
 | `/ticket list [status] [email] [page]` | List support tickets, newest first, filterable by status or customer. |
 | `/ticket view <id>` | A ticket with its recent messages. The ID option autocompletes by subject and customer. |
 | `/ticket reply <id> <message>` | Send a message to a ticket as the shop. |
@@ -78,6 +79,7 @@ Restocking a product with `/restock` — paste the keys (or attach a `.txt`), an
 | `/traffic [timeframe]` | Live visitor count plus pageviews, visits, bounce rate, average visit time and UTM breakdown, with change vs. the previous period. |
 | `/notifications [count]` | The latest dashboard notifications (sales, tickets, feedback, webhooks) with links to the dashboard. |
 | `/activity [page]` | Audit log of dashboard and staff actions with what-changed summaries (e.g. `stock: 26 → 102`). |
+| `/webhooklogs [failed] [source] [invoice] [page]` | Outgoing webhook and dynamic-delivery request logs with status, timing, and error messages. URLs are shown without query strings so secrets stay out of Discord. |
 | `/affiliate list\|stats\|view` | Browse your affiliates, aggregate program stats, or one affiliate's earnings, referrals and payout requests. |
 | `/affiliate invite <email> <code> [tier]` | Make a customer an affiliate. `suspend` / `restore` toggle an affiliate without losing their history. |
 | `/affiliate payouts [status]` | List payout requests; approve with `/affiliate payout-pay <id>` (money moves outside SellAuth) or reject with `/affiliate payout-reject <id> [note]` (refunds their balance). |
