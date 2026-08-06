@@ -145,4 +145,6 @@ Two copies of the bot are running with the same token, and they race each other 
 
 ## License
 
-MIT
+SellBot was made by **Barkie** ([barkiedev.cc](https://barkiedev.cc)) and is released under the [MIT License](LICENSE).
+
+That means you're free to use, customize, self-host, and redistribute it however you want — build something good with it. The software is provided as-is: Barkie / barkiedev.cc is not responsible for anything that happens through your use of it, including (but not limited to) lost sales, misconfigured permissions, or actions taken on your SellAuth shop. See the [LICENSE](LICENSE) file for the full terms.
