@@ -12,6 +12,9 @@ dist/
 # Per-server bot configuration (copy config.example.json instead)
 config.json
 
+# Runtime data (claimed orders)
+data/
+
 # Logs
 *.log
 npm-debug.log*

@@ -14,6 +14,8 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/products [search] [page]` | Browse products with prices and stock counts, optionally filtered by name. |
 | `/product <name>` | Detailed view of one product with per-variant prices and stock. The name option autocompletes from your live catalog. |
 | `/commands` | List all SellBot commands and the permission level each one requires. |
+| `/redeemorder <orderid>` | Customers verify a completed order and receive the customer role. |
+| `/claimorder-embed` | Admins post a permanent embed with a "Claim Order" button that opens an order-ID form. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 
@@ -35,13 +37,17 @@ Copy `config.example.json` to `config.json` to control who can use which command
     "top": "support",
     "top customers": "admin"
   },
-  "allowedChannelIds": ["345678901234567890"]
+  "allowedChannelIds": ["345678901234567890"],
+  "customerRoleId": "456789012345678901"
 }
 ```
+
+> **Important:** always wrap Discord IDs in quotes. Unquoted numeric IDs get corrupted because they exceed JavaScript's safe integer range.
 
 - **`roles.adminRoleIds` / `roles.supportRoleIds`** — Discord role IDs (right-click a role → Copy Role ID, with Developer Mode enabled). Members with an admin role can use everything; support roles only unlock commands set to `"support"`.
 - **`commandPermissions`** — permission level per command: `"admin"`, `"support"`, or `"everyone"`. Commands not listed default to `"admin"`. Subcommands can override their parent with a `"command subcommand"` key — in the example above, support staff can use `/top products`, but `/top customers` stays admin-only.
 - **`allowedChannelIds`** — channel or category IDs where commands are allowed. A category ID allows every channel inside it. Leave empty to allow commands everywhere.
+- **`customerRoleId`** — the role granted when a member claims a completed order via `/redeemorder` or the claim button. Leave empty to disable order claiming. The bot needs the **Manage Roles** permission and its role must be *above* the customer role in your server's role list. Each order can only be claimed by one Discord user (tracked in `data/claims.json`).
 
 Notes:
 
@@ -66,8 +72,10 @@ Notes:
 4. Invite the bot to your server using this URL (replace `YOUR_CLIENT_ID`):
 
 ```
-https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot+applications.commands
+https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot+applications.commands&permissions=268435456
 ```
+
+The `permissions=268435456` part grants **Manage Roles**, which is needed for the order-claim feature to assign the customer role.
 
 ### 2. Get your SellAuth credentials
 

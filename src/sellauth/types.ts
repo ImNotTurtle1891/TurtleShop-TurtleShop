@@ -86,3 +86,16 @@ export interface ProductListQuery {
   readonly perPage: number;
   readonly name?: string;
 }
+
+export interface InvoiceItem {
+  readonly product: { readonly name: string } | null;
+}
+
+export interface Invoice {
+  readonly id: number;
+  readonly unique_id: string;
+  readonly status: string;
+  readonly email: string | null;
+  readonly completed_at: string | null;
+  readonly items: readonly InvoiceItem[];
+}

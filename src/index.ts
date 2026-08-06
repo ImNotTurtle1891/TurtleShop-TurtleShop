@@ -11,6 +11,12 @@ import { loadBotConfig } from './botConfig.js';
 import { commands } from './commands/index.js';
 import type { Command, CommandContext } from './commands/types.js';
 import { loadConfig } from './config.js';
+import {
+  CLAIM_ORDER_BUTTON_ID,
+  CLAIM_ORDER_MODAL_ID,
+  handleClaimOrderModal,
+  openClaimOrderModal
+} from './lib/claimInteractions.js';
 import { evaluateAccess } from './lib/permissions.js';
 import { SellAuthApiError, SellAuthClient } from './sellauth/client.js';
 
@@ -80,6 +86,33 @@ client.once(Events.ClientReady, (readyClient) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  if (interaction.isButton()) {
+    if (interaction.customId === CLAIM_ORDER_BUTTON_ID) {
+      try {
+        await openClaimOrderModal(interaction);
+      } catch (error) {
+        console.error('Failed to open the claim-order modal:', error);
+      }
+    }
+    return;
+  }
+
+  if (interaction.isModalSubmit()) {
+    if (interaction.customId === CLAIM_ORDER_MODAL_ID) {
+      try {
+        await handleClaimOrderModal(interaction, context);
+      } catch (error) {
+        console.error('Claim-order modal submission failed:', error);
+        if (interaction.deferred) {
+          await interaction
+            .editReply({ content: 'Something went wrong while claiming your order. Try again later.' })
+            .catch(() => undefined);
+        }
+      }
+    }
+    return;
+  }
+
   if (interaction.isAutocomplete()) {
     const command = commandsByName.get(interaction.commandName);
     if (command?.autocomplete === undefined) {

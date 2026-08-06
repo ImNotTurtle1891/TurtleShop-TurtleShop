@@ -1,6 +1,7 @@
 import type {
   AnalyticsSummary,
   DateRange,
+  Invoice,
   ProductDetail,
   ProductListQuery,
   ProductPage,
@@ -76,6 +77,11 @@ export class SellAuthClient {
 
   public async getProduct(productId: number): Promise<ProductDetail> {
     return this.get<ProductDetail>(`/products/${productId}`);
+  }
+
+  /** Accepts either the numeric invoice ID or the customer-facing unique ID. */
+  public async getInvoice(invoiceId: string): Promise<Invoice> {
+    return this.get<Invoice>(`/invoices/${encodeURIComponent(invoiceId)}`);
   }
 
   private async get<T>(path: string, query?: QueryParams): Promise<T> {

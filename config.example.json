@@ -10,7 +10,10 @@
     "top customers": "admin",
     "products": "admin",
     "product": "admin",
-    "commands": "admin"
+    "commands": "admin",
+    "redeemorder": "everyone",
+    "claimorder-embed": "admin"
   },
-  "allowedChannelIds": []
+  "allowedChannelIds": [],
+  "customerRoleId": ""
 }

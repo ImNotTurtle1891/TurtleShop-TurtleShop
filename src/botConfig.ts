@@ -22,16 +22,32 @@ export interface SellBotConfig {
    * Empty means commands work everywhere.
    */
   readonly allowedChannelIds: readonly string[];
+  /** Role granted to members who claim a completed order. Null disables claiming. */
+  readonly customerRoleId: string | null;
 }
 
 const DEFAULT_CONFIG: SellBotConfig = {
   roles: { adminRoleIds: [], supportRoleIds: [] },
   commandPermissions: {},
-  allowedChannelIds: []
+  allowedChannelIds: [],
+  customerRoleId: null
 };
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+
+/**
+ * Discord IDs exceed JavaScript's safe integer range, so unquoted IDs in
+ * config.json silently lose precision. Reject them with a loud warning.
+ */
+function warnOnNumericIds(fieldName: string, value: unknown): void {
+  if (Array.isArray(value) && value.some((entry) => typeof entry === 'number')) {
+    console.warn(
+      `config.json: ${fieldName} contains unquoted numeric IDs, which corrupts Discord IDs. ` +
+        'Wrap each ID in quotes, e.g. ["123456789012345678"]. These entries are being IGNORED.'
+    );
+  }
 }
 
 function isPermissionLevel(value: unknown): value is PermissionLevel {
@@ -43,6 +59,8 @@ function parseRoles(raw: unknown): RoleConfig {
     return DEFAULT_CONFIG.roles;
   }
   const candidate = raw as Record<string, unknown>;
+  warnOnNumericIds('roles.adminRoleIds', candidate['adminRoleIds']);
+  warnOnNumericIds('roles.supportRoleIds', candidate['supportRoleIds']);
   return {
     adminRoleIds: isStringArray(candidate['adminRoleIds']) ? candidate['adminRoleIds'] : [],
     supportRoleIds: isStringArray(candidate['supportRoleIds']) ? candidate['supportRoleIds'] : []
@@ -86,12 +104,18 @@ export function loadBotConfig(): SellBotConfig {
   }
 
   const candidate = parsed as Record<string, unknown>;
+  warnOnNumericIds('allowedChannelIds', candidate['allowedChannelIds']);
+  const rawCustomerRoleId = candidate['customerRoleId'];
   return {
     roles: parseRoles(candidate['roles']),
     commandPermissions: parseCommandPermissions(candidate['commandPermissions']),
     allowedChannelIds: isStringArray(candidate['allowedChannelIds'])
       ? candidate['allowedChannelIds']
-      : []
+      : [],
+    customerRoleId:
+      typeof rawCustomerRoleId === 'string' && rawCustomerRoleId.trim() !== ''
+        ? rawCustomerRoleId.trim()
+        : null
   };
 }
 
