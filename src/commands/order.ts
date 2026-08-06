@@ -144,6 +144,10 @@ async function buildOrderEmbed(invoice: Invoice, context: CommandContext): Promi
     embed.addFields({ name: 'Feedback', value: `${stars}${message}` });
   }
 
+  if (invoice.dashboard_note !== null && invoice.dashboard_note !== '') {
+    embed.addFields({ name: 'Note', value: truncate(invoice.dashboard_note, 1024) });
+  }
+
   const claim = getClaim(String(invoice.id));
   if (claim !== undefined) {
     embed.addFields({
@@ -180,27 +184,114 @@ function addIdOption(subcommand: SlashCommandSubcommandBuilder): SlashCommandSub
 }
 
 interface OrderAction {
-  readonly targetStatus: string;
-  readonly run: (context: CommandContext, invoiceId: number) => Promise<void>;
-  readonly successMessage: string;
+  /** Returns a message explaining why the action cannot run, or null when it can. */
+  readonly guard?: (invoice: Invoice) => string | null;
+  readonly run: (
+    context: CommandContext,
+    invoice: Invoice,
+    interaction: ChatInputCommandInteraction
+  ) => Promise<void>;
+  readonly successMessage: (interaction: ChatInputCommandInteraction) => string;
+  /** Used in the error reply: "Could not <errorLabel>: ..." */
+  readonly errorLabel: string;
+}
+
+function alreadyStatusGuard(status: string): (invoice: Invoice) => string | null {
+  return (invoice) => (invoice.status === status ? `is already ${status}` : null);
 }
 
 const ORDER_ACTIONS: Readonly<Record<string, OrderAction>> = {
   complete: {
-    targetStatus: 'completed',
-    run: async (context, invoiceId) => context.sellAuth.updateInvoiceStatus(invoiceId, 'completed'),
-    successMessage: 'has been marked as **completed**.'
+    guard: alreadyStatusGuard('completed'),
+    run: async (context, invoice) =>
+      context.sellAuth.updateInvoiceStatus(invoice.id, 'completed'),
+    successMessage: () => 'has been marked as **completed**.',
+    errorLabel: 'mark the order as completed'
   },
   refund: {
-    targetStatus: 'refunded',
-    run: async (context, invoiceId) => context.sellAuth.refundInvoice(invoiceId),
-    successMessage:
-      'has been marked as **refunded**. Note: this does not return any money by itself — process the actual refund with your payment provider.'
+    guard: alreadyStatusGuard('refunded'),
+    run: async (context, invoice) => context.sellAuth.refundInvoice(invoice.id),
+    successMessage: () =>
+      'has been marked as **refunded**. Note: this does not return any money by itself — process the actual refund with your payment provider.',
+    errorLabel: 'mark the order as refunded'
   },
   cancel: {
-    targetStatus: 'cancelled',
-    run: async (context, invoiceId) => context.sellAuth.cancelInvoice(invoiceId),
-    successMessage: 'has been marked as **cancelled**.'
+    guard: alreadyStatusGuard('cancelled'),
+    run: async (context, invoice) => context.sellAuth.cancelInvoice(invoice.id),
+    successMessage: () => 'has been marked as **cancelled**.',
+    errorLabel: 'mark the order as cancelled'
+  },
+  unrefund: {
+    guard: (invoice) => (invoice.status === 'refunded' ? null : 'is not marked as refunded'),
+    run: async (context, invoice) => context.sellAuth.unrefundInvoice(invoice.id),
+    successMessage: () => 'is no longer marked as refunded.',
+    errorLabel: 'unrefund the order'
+  },
+  process: {
+    guard: alreadyStatusGuard('completed'),
+    run: async (context, invoice, interaction) =>
+      context.sellAuth.processInvoice(
+        invoice.id,
+        interaction.options.getBoolean('mark_as_paid') ?? false
+      ),
+    successMessage: (interaction) =>
+      interaction.options.getBoolean('mark_as_paid') === true
+        ? 'has been processed — marked as paid and its items delivered.'
+        : 'has been processed — its items have been delivered.',
+    errorLabel: 'process the order'
+  },
+  deliver: {
+    run: async (context, invoice) => context.sellAuth.deliverInvoice(invoice.id),
+    successMessage: () => 'items have been re-delivered and the customer has been notified.',
+    errorLabel: 're-deliver the order'
+  },
+  note: {
+    run: async (context, invoice, interaction) =>
+      context.sellAuth.updateInvoiceDashboardNote(
+        invoice.id,
+        interaction.options.getString('text', true).trim()
+      ),
+    successMessage: () => 'dashboard note has been updated.',
+    errorLabel: 'update the dashboard note'
+  },
+  ship: {
+    run: async (context, invoice, interaction) => {
+      const code = interaction.options.getString('tracking_code')?.trim();
+      const link = interaction.options.getString('tracking_link')?.trim();
+      const tracking: { code?: string; link?: string } = {};
+      if (code !== undefined && code !== '') {
+        tracking.code = code;
+      }
+      if (link !== undefined && link !== '') {
+        tracking.link = link;
+      }
+      await context.sellAuth.shipInvoice(invoice.id, tracking);
+    },
+    successMessage: () => 'has been marked as **shipped**.',
+    errorLabel: 'mark the order as shipped'
+  },
+  archive: {
+    guard: (invoice) => (invoice.archived_at !== null ? 'is already archived' : null),
+    run: async (context, invoice) => context.sellAuth.archiveInvoice(invoice.id),
+    successMessage: () => 'has been archived.',
+    errorLabel: 'archive the order'
+  },
+  unarchive: {
+    guard: (invoice) => (invoice.archived_at === null ? 'is not archived' : null),
+    run: async (context, invoice) => context.sellAuth.unarchiveInvoice(invoice.id),
+    successMessage: () => 'has been unarchived.',
+    errorLabel: 'unarchive the order'
+  },
+  'reverse-cashback': {
+    run: async (context, invoice) => context.sellAuth.reverseCashback(invoice.id),
+    successMessage: () =>
+      'cashback has been reversed. The customer balance may go negative if it was already spent.',
+    errorLabel: 'reverse the cashback'
+  },
+  'reverse-affiliate-commission': {
+    run: async (context, invoice) => context.sellAuth.reverseAffiliateCommission(invoice.id),
+    successMessage: () => 'affiliate commission has been reversed.',
+    errorLabel: 'reverse the affiliate commission'
   }
 };
 
@@ -229,6 +320,82 @@ export const orderCommand: Command = {
           .setDescription('Send to this address instead of the one on the order')
           .setRequired(false)
           .setMaxLength(254)
+      )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand
+          .setName('process')
+          .setDescription('Deliver the items of a stuck pending or out-of-stock order')
+      ).addBooleanOption((option) =>
+        option
+          .setName('mark_as_paid')
+          .setDescription('Also mark the order as paid')
+          .setRequired(false)
+      )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand
+          .setName('deliver')
+          .setDescription('Re-deliver the order items and notify the customer')
+      )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand.setName('note').setDescription('Set the dashboard note of an order')
+      ).addStringOption((option) =>
+        option
+          .setName('text')
+          .setDescription('The note text')
+          .setRequired(true)
+          .setMaxLength(1000)
+      )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand
+          .setName('ship')
+          .setDescription('Mark an order as shipped, optionally with tracking info')
+      )
+        .addStringOption((option) =>
+          option
+            .setName('tracking_code')
+            .setDescription('The shipment tracking code')
+            .setRequired(false)
+            .setMaxLength(100)
+        )
+        .addStringOption((option) =>
+          option
+            .setName('tracking_link')
+            .setDescription('A link to track the shipment')
+            .setRequired(false)
+            .setMaxLength(500)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand.setName('unrefund').setDescription('Remove the refunded status from an order')
+      )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(subcommand.setName('archive').setDescription('Archive an order'))
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(subcommand.setName('unarchive').setDescription('Unarchive an order'))
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand
+          .setName('reverse-cashback')
+          .setDescription('Reverse the cashback earned on an order (e.g. after a chargeback)')
+      )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption(
+        subcommand
+          .setName('reverse-affiliate-commission')
+          .setDescription('Reverse the affiliate commission earned on an order')
       )
     ),
 
@@ -283,23 +450,22 @@ export const orderCommand: Command = {
       return;
     }
 
-    if (invoice.status === action.targetStatus) {
-      await interaction.editReply({
-        content: `Order \`${invoice.unique_id}\` is already ${action.targetStatus}.`
-      });
+    const blocked = action.guard?.(invoice) ?? null;
+    if (blocked !== null) {
+      await interaction.editReply({ content: `Order \`${invoice.unique_id}\` ${blocked}.` });
       return;
     }
 
     try {
-      await action.run(context, invoice.id);
+      await action.run(context, invoice, interaction);
     } catch (error) {
-      await replyWithApiError(interaction, error, `mark the order as ${action.targetStatus}`);
+      await replyWithApiError(interaction, error, action.errorLabel);
       return;
     }
 
     const updated = await context.sellAuth.getInvoice(String(invoice.id));
     await interaction.editReply({
-      content: `Order \`${invoice.unique_id}\` ${action.successMessage}`,
+      content: `Order \`${invoice.unique_id}\` ${action.successMessage(interaction)}`,
       embeds: [await buildOrderEmbed(updated, context)]
     });
   }

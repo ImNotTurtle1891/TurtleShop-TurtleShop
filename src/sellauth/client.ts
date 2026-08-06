@@ -137,6 +137,57 @@ export class SellAuthClient {
     );
   }
 
+  /** Processes a pending/confirming/out-of-stock invoice, delivering its items. */
+  public async processInvoice(invoiceId: number, markAsPaid: boolean): Promise<void> {
+    await this.request(
+      'GET',
+      `/invoices/${invoiceId}/process`,
+      markAsPaid ? { query: { mark_as_paid: '1' } } : {}
+    );
+  }
+
+  public async deliverInvoice(invoiceId: number): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/deliver`);
+  }
+
+  public async updateInvoiceDashboardNote(invoiceId: number, note: string | null): Promise<void> {
+    await this.request('PUT', `/invoices/${invoiceId}/dashboard-note`, { body: { note } });
+  }
+
+  public async shipInvoice(
+    invoiceId: number,
+    tracking: { readonly code?: string; readonly link?: string }
+  ): Promise<void> {
+    const body: Record<string, unknown> = {};
+    if (tracking.code !== undefined) {
+      body['tracking_code'] = tracking.code;
+    }
+    if (tracking.link !== undefined) {
+      body['tracking_link'] = tracking.link;
+    }
+    await this.request('POST', `/invoices/${invoiceId}/ship`, { body });
+  }
+
+  public async unrefundInvoice(invoiceId: number): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/unrefund`);
+  }
+
+  public async archiveInvoice(invoiceId: number): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/archive`);
+  }
+
+  public async unarchiveInvoice(invoiceId: number): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/unarchive`);
+  }
+
+  public async reverseCashback(invoiceId: number): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/reverse-cashback`);
+  }
+
+  public async reverseAffiliateCommission(invoiceId: number): Promise<void> {
+    await this.request('POST', `/invoices/${invoiceId}/reverse-affiliate-commission`);
+  }
+
   public async createCheckoutSession(input: CreateCheckoutInput): Promise<CheckoutSession> {
     const body: Record<string, unknown> = { cart: input.cart };
     if (input.email !== undefined) {

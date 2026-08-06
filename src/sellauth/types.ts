@@ -316,6 +316,8 @@ export interface Invoice {
   readonly email: string | null;
   readonly created_at: string;
   readonly completed_at: string | null;
+  readonly archived_at: string | null;
+  readonly dashboard_note: string | null;
   readonly price: string | null;
   readonly paid: string | null;
   readonly currency: string | null;

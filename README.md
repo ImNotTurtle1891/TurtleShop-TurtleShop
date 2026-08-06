@@ -22,6 +22,14 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners — r
 | `/order refund <id>` | Mark an order as refunded (does not move money — process the actual refund with your payment provider). |
 | `/order cancel <id>` | Mark an order as cancelled. |
 | `/order resend-email <id> [email]` | Resend the order confirmation email, optionally to a different address. |
+| `/order process <id> [mark_as_paid]` | Deliver the items of a stuck pending or out-of-stock order, optionally marking it as paid. |
+| `/order deliver <id>` | Re-deliver the order items and notify the customer. |
+| `/order note <id> <text>` | Set the dashboard note of an order. |
+| `/order ship <id> [tracking_code] [tracking_link]` | Mark an order as shipped, optionally with tracking info. |
+| `/order unrefund <id>` | Remove the refunded status from an order. |
+| `/order archive <id>` / `/order unarchive <id>` | Archive or unarchive an order. |
+| `/order reverse-cashback <id>` | Reverse the cashback a customer earned on an order (e.g. after a chargeback). |
+| `/order reverse-affiliate-commission <id>` | Reverse the affiliate commission earned on an order. |
 | `/coupon list [page]` | List coupons with discount, usage counts, total savings, and expiry. |
 | `/coupon create <code> <discount> <type> [...]` | Create an all-products coupon. Optional: max uses, uses per customer, minimum order value, expiry in days. |
 | `/coupon delete <code>` | Delete a coupon. The code option autocompletes from your live coupons. |
