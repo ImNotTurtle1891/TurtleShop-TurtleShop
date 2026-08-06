@@ -169,6 +169,25 @@ export const feedbackCommand: Command = {
         .addStringOption((option) =>
           option.setName('message').setDescription('Your reply, shown publicly on your shop').setRequired(true).setMaxLength(1000)
         )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('dispute')
+        .setDescription('Dispute an unfair feedback so SellAuth staff review it')
+        .addIntegerOption((option) =>
+          option.setName('id').setDescription('The feedback ID (shown in /feedback recent)').setRequired(true).setMinValue(1)
+        )
+        .addStringOption((option) =>
+          option.setName('reason').setDescription('Why this feedback should be removed').setRequired(true).setMaxLength(1000)
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName('cancel-dispute')
+        .setDescription('Cancel a pending dispute on a feedback')
+        .addIntegerOption((option) =>
+          option.setName('id').setDescription('The feedback ID').setRequired(true).setMinValue(1)
+        )
     ),
 
   async execute(
@@ -187,8 +206,63 @@ export const feedbackCommand: Command = {
       case 'reply':
         await handleReply(interaction, context);
         return;
+      case 'dispute':
+        await handleDispute(interaction, context);
+        return;
+      case 'cancel-dispute':
+        await handleCancelDispute(interaction, context);
+        return;
       default:
         await interaction.editReply({ content: 'Unknown subcommand.' });
     }
   }
 };
+
+async function handleDispute(
+  interaction: ChatInputCommandInteraction,
+  context: CommandContext
+): Promise<void> {
+  const id = interaction.options.getInteger('id', true);
+  const reason = interaction.options.getString('reason', true).trim();
+
+  try {
+    await context.sellAuth.disputeFeedback(id, reason);
+  } catch (error) {
+    if (error instanceof SellAuthApiError) {
+      const detail =
+        error.status === 404
+          ? `no feedback found with ID \`${id}\``
+          : (error.apiMessage ?? `the SellAuth API responded with HTTP ${error.status}`);
+      await interaction.editReply({ content: `Could not dispute the feedback: ${detail}` });
+      return;
+    }
+    throw error;
+  }
+
+  await interaction.editReply({
+    content: `Feedback \`${id}\` has been disputed — SellAuth staff will review it. Reason:\n> ${truncate(reason, 500)}`
+  });
+}
+
+async function handleCancelDispute(
+  interaction: ChatInputCommandInteraction,
+  context: CommandContext
+): Promise<void> {
+  const id = interaction.options.getInteger('id', true);
+
+  try {
+    await context.sellAuth.cancelFeedbackDispute(id);
+  } catch (error) {
+    if (error instanceof SellAuthApiError) {
+      const detail =
+        error.status === 404
+          ? `no feedback found with ID \`${id}\``
+          : (error.apiMessage ?? `the SellAuth API responded with HTTP ${error.status}`);
+      await interaction.editReply({ content: `Could not cancel the dispute: ${detail}` });
+      return;
+    }
+    throw error;
+  }
+
+  await interaction.editReply({ content: `The dispute on feedback \`${id}\` has been cancelled.` });
+}

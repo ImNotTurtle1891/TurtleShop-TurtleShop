@@ -208,6 +208,28 @@ async function handleCloseReopen(
   });
 }
 
+async function handleArchive(
+  interaction: ChatInputCommandInteraction,
+  context: CommandContext,
+  action: 'archive' | 'unarchive'
+): Promise<void> {
+  const ticket = await resolveTicket(interaction, context);
+  if (ticket === null) {
+    return;
+  }
+
+  if (action === 'archive') {
+    await context.sellAuth.archiveTicket(ticket.id);
+  } else {
+    await context.sellAuth.unarchiveTicket(ticket.id);
+  }
+  invalidateTicketCache();
+
+  await interaction.editReply({
+    content: `Ticket **${truncate(ticket.subject, 100)}** (${ticket.customer?.email ?? 'unknown'}) was ${action === 'archive' ? 'archived' : 'unarchived'}.`
+  });
+}
+
 function addIdOption(name: string): (subcommand: SlashCommandSubcommandBuilder) => SlashCommandSubcommandBuilder {
   return (subcommand) =>
     subcommand.addStringOption((option) =>
@@ -261,6 +283,16 @@ export const ticketCommand: Command = {
     )
     .addSubcommand((subcommand) =>
       addIdOption('reopen')(subcommand.setName('reopen').setDescription('Reopen a closed ticket'))
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption('archive')(
+        subcommand.setName('archive').setDescription('Archive a ticket (hides it from the default list)')
+      )
+    )
+    .addSubcommand((subcommand) =>
+      addIdOption('unarchive')(
+        subcommand.setName('unarchive').setDescription('Bring a ticket back from the archive')
+      )
     ),
 
   async autocomplete(
@@ -311,6 +343,12 @@ export const ticketCommand: Command = {
         return;
       case 'reopen':
         await handleCloseReopen(interaction, context, 'reopen');
+        return;
+      case 'archive':
+        await handleArchive(interaction, context, 'archive');
+        return;
+      case 'unarchive':
+        await handleArchive(interaction, context, 'unarchive');
         return;
       default:
         await interaction.editReply({ content: 'Unknown subcommand.' });

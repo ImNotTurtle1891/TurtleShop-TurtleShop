@@ -356,6 +356,110 @@ export interface Invoice {
   readonly items: readonly InvoiceDetailItem[];
 }
 
+export interface BlacklistLogEntry {
+  readonly id: number;
+  readonly value: string;
+  /** e.g. "block". */
+  readonly decision: string;
+  readonly rule_type: string | null;
+  readonly rule: { readonly id: number; readonly value: string; readonly type: string } | null;
+  readonly invoice_id: number | null;
+  readonly created_at: string;
+}
+
+export interface BlacklistLogPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly BlacklistLogEntry[];
+}
+
+export interface WhitelistEntry {
+  readonly id: number;
+  readonly type: string;
+  readonly value: string;
+  readonly reason: string | null;
+  readonly enabled: boolean;
+  readonly created_at: string;
+}
+
+export interface WhitelistPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly WhitelistEntry[];
+}
+
+export interface UpdateCouponInput {
+  readonly code: string;
+  readonly global: boolean;
+  readonly discount: number;
+  readonly type: 'percentage' | 'fixed';
+  readonly maxUses: number | null;
+  readonly maxUsesPerCustomer: number | null;
+  readonly minInvoicePrice: number | null;
+  /** YYYY-MM-DD or null for no expiry. */
+  readonly expirationDate: string | null;
+}
+
+export interface Subscription {
+  readonly id: number;
+  readonly product_name: string | null;
+  readonly variant_name: string | null;
+  readonly status: string;
+  readonly interval: string;
+  readonly interval_count: number;
+  readonly quantity: number;
+  readonly currency: string | null;
+  readonly recurring_price: string | null;
+  readonly renewal_method: string | null;
+  readonly current_period_end: string | null;
+  readonly cancel_at_period_end: boolean;
+  readonly cancelled_at: string | null;
+  readonly failed_payment_count: number;
+  readonly created_at: string;
+  readonly customer: { readonly id: number; readonly email: string } | null;
+}
+
+export interface SubscriptionPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly Subscription[];
+}
+
+export interface SubscriptionDetail {
+  readonly subscription: Subscription;
+  readonly invoices?: readonly unknown[];
+}
+
+export interface AbandonedCheckout {
+  readonly id: number;
+  readonly unique_id: string;
+  readonly status: string;
+  readonly price: string | null;
+  readonly currency: string | null;
+  readonly email: string | null;
+  readonly created_at: string;
+  readonly abandoned_dismissed_at: string | null;
+  readonly abandoned_recovery_sent_at: string | null;
+  readonly customer: { readonly id: number; readonly email: string } | null;
+}
+
+export interface AbandonedCheckoutPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly AbandonedCheckout[];
+}
+
+export interface AbandonedCheckoutStats {
+  readonly total: number;
+  readonly ghost_count: number;
+  readonly dropped_count: number;
+  readonly dismissed_count: number;
+}
+
 export interface PaymentMethod {
   readonly id: number;
   readonly type: string;

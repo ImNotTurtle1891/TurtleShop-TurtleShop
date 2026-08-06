@@ -1,3 +1,4 @@
+import { abandonedCommand } from './abandoned.js';
 import { activityCommand } from './activity.js';
 import { affiliateCommand } from './affiliate.js';
 import { analyticsCommand } from './analytics.js';
@@ -13,16 +14,20 @@ import { notificationsCommand } from './notifications.js';
 import { orderCommand } from './order.js';
 import { paymentMethodsCommand } from './paymentmethods.js';
 import { productCommand } from './product.js';
+import { productVisibilityCommand } from './product-visibility.js';
 import { productsCommand } from './products.js';
 import { redeemOrderCommand } from './redeemorder.js';
 import { resellerCommand } from './reseller.js';
 import { restockCommand } from './restock.js';
+import { setStockCommand } from './setstock.js';
 import { statsCommand } from './stats.js';
 import { statusCommand } from './status.js';
 import { stockCommand } from './stock.js';
+import { subscriptionCommand } from './subscription.js';
 import { ticketCommand } from './ticket.js';
 import { topCommand } from './top.js';
 import { trafficCommand } from './traffic.js';
+import { whitelistCommand } from './whitelist.js';
 import type { Command } from './types.js';
 
 export const commands: readonly Command[] = [
@@ -50,5 +55,10 @@ export const commands: readonly Command[] = [
   activityCommand,
   affiliateCommand,
   resellerCommand,
-  balanceCommand
+  balanceCommand,
+  whitelistCommand,
+  subscriptionCommand,
+  setStockCommand,
+  productVisibilityCommand,
+  abandonedCommand
 ];

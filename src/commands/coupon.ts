@@ -9,7 +9,7 @@ import {
 } from 'discord.js';
 import { formatCount, formatUsd, truncate } from '../lib/format.js';
 import { SellAuthApiError } from '../sellauth/client.js';
-import type { Coupon, CreateCouponInput } from '../sellauth/types.js';
+import type { Coupon, CreateCouponInput, UpdateCouponInput } from '../sellauth/types.js';
 import { EMBED_COLOR, type Command, type CommandContext } from './types.js';
 
 const COUPON_CODE_PATTERN = /^[\w-]{1,64}$/;
@@ -158,6 +158,96 @@ async function handleCreate(
   await interaction.editReply({ content: `Coupon \`${code}\` created: ${details.join(', ')}.` });
 }
 
+async function handleEdit(
+  interaction: ChatInputCommandInteraction,
+  context: CommandContext
+): Promise<void> {
+  const code = interaction.options.getString('code', true).trim();
+  const coupon = (await cachedCoupons(context)).find(
+    (candidate) => candidate.code.toUpperCase() === code.toUpperCase()
+  );
+  if (coupon === undefined) {
+    await interaction.editReply({ content: `No coupon found with code \`${code}\`.` });
+    return;
+  }
+  if (!coupon.global) {
+    await interaction.editReply({
+      content: `\`${coupon.code}\` is a product-specific coupon — edit it in the dashboard so its product list is preserved.`
+    });
+    return;
+  }
+
+  const newDiscount = interaction.options.getNumber('discount');
+  const newType = interaction.options.getString('type') as 'percentage' | 'fixed' | null;
+  const newMaxUses = interaction.options.getInteger('max_uses');
+  const newMaxUsesPerCustomer = interaction.options.getInteger('max_uses_per_customer');
+  const newMinOrder = interaction.options.getNumber('min_order');
+  const expiresInDays = interaction.options.getInteger('expires_in_days');
+  const clearExpiry = interaction.options.getBoolean('clear_expiry') ?? false;
+
+  if (
+    newDiscount === null &&
+    newType === null &&
+    newMaxUses === null &&
+    newMaxUsesPerCustomer === null &&
+    newMinOrder === null &&
+    expiresInDays === null &&
+    !clearExpiry
+  ) {
+    await interaction.editReply({ content: 'Nothing to change — provide at least one option.' });
+    return;
+  }
+
+  const type = newType ?? (coupon.type === 'percentage' ? 'percentage' : 'fixed');
+  const discount = newDiscount ?? Number(coupon.discount);
+  if (type === 'percentage' && discount > 100) {
+    await interaction.editReply({ content: 'A percentage discount cannot exceed 100%.' });
+    return;
+  }
+
+  let expirationDate: string | null = coupon.expiration_date?.slice(0, 10) ?? null;
+  if (clearExpiry) {
+    expirationDate = null;
+  } else if (expiresInDays !== null) {
+    expirationDate = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+  }
+
+  const input: UpdateCouponInput = {
+    code: coupon.code,
+    global: true,
+    discount,
+    type,
+    maxUses: newMaxUses ?? coupon.max_uses,
+    maxUsesPerCustomer: newMaxUsesPerCustomer ?? coupon.max_uses_per_customer,
+    minInvoicePrice:
+      newMinOrder ?? (coupon.min_invoice_price === null ? null : Number(coupon.min_invoice_price)),
+    expirationDate
+  };
+
+  try {
+    await context.sellAuth.updateCoupon(coupon.id, input);
+  } catch (error) {
+    if (error instanceof SellAuthApiError) {
+      const reason = error.apiMessage ?? `the SellAuth API responded with HTTP ${error.status}`;
+      await interaction.editReply({ content: `Could not update the coupon: ${reason}` });
+      return;
+    }
+    throw error;
+  }
+  invalidateCouponCache();
+
+  const details = [
+    input.type === 'percentage' ? `${input.discount}% off` : `${formatUsd(input.discount)} off`,
+    input.maxUses === null ? 'unlimited uses' : `max ${formatCount(input.maxUses)} uses`,
+    ...(input.maxUsesPerCustomer === null ? [] : [`${formatCount(input.maxUsesPerCustomer)} per customer`]),
+    ...(input.minInvoicePrice === null ? [] : [`min order ${formatUsd(input.minInvoicePrice)}`]),
+    input.expirationDate === null ? 'no expiry' : `expires ${input.expirationDate}`
+  ];
+  await interaction.editReply({ content: `Coupon \`${coupon.code}\` updated: ${details.join(', ')}.` });
+}
+
 async function handleDelete(
   interaction: ChatInputCommandInteraction,
   context: CommandContext
@@ -235,6 +325,54 @@ export const couponCommand: Command = {
     )
     .addSubcommand((subcommand) =>
       subcommand
+        .setName('edit')
+        .setDescription('Change a coupon without recreating it')
+        .addStringOption((option) =>
+          option
+            .setName('code')
+            .setDescription('The coupon to edit')
+            .setRequired(true)
+            .setMaxLength(64)
+            .setAutocomplete(true)
+        )
+        .addNumberOption((option) =>
+          option
+            .setName('discount')
+            .setDescription('New discount amount')
+            .setMinValue(0.01)
+            .setMaxValue(999999)
+        )
+        .addStringOption((option) =>
+          option
+            .setName('type')
+            .setDescription('New discount type')
+            .addChoices(
+              { name: 'Percentage (% off)', value: 'percentage' },
+              { name: 'Fixed amount off', value: 'fixed' }
+            )
+        )
+        .addIntegerOption((option) =>
+          option.setName('max_uses').setDescription('New total use limit').setMinValue(1)
+        )
+        .addIntegerOption((option) =>
+          option.setName('max_uses_per_customer').setDescription('New per-customer limit').setMinValue(1)
+        )
+        .addNumberOption((option) =>
+          option.setName('min_order').setDescription('New minimum order value').setMinValue(0)
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName('expires_in_days')
+            .setDescription('New expiry, this many days from now')
+            .setMinValue(1)
+            .setMaxValue(MAX_EXPIRY_DAYS)
+        )
+        .addBooleanOption((option) =>
+          option.setName('clear_expiry').setDescription('Remove the expiry date entirely')
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
         .setName('delete')
         .setDescription('Delete a coupon')
         .addStringOption((option) =>
@@ -277,6 +415,9 @@ export const couponCommand: Command = {
         return;
       case 'create':
         await handleCreate(interaction, context);
+        return;
+      case 'edit':
+        await handleEdit(interaction, context);
         return;
       case 'delete':
         await handleDelete(interaction, context);

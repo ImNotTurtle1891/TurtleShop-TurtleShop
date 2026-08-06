@@ -22,7 +22,7 @@
     "order replace-delivered": "admin",
     "order redo-delivery": "admin",
     "balance": "admin",
-    "balance view": "support",
+    "balance view": "admin",
     "order deliver": "admin",
     "order unrefund": "admin",
     "order reverse-cashback": "admin",
@@ -49,7 +49,12 @@
     "reseller": "admin",
     "reseller list": "admin",
     "reseller stats": "admin",
-    "reseller view": "admin"
+    "reseller view": "admin",
+    "whitelist": "admin",
+    "subscription": "admin",
+    "setstock": "admin",
+    "product-visibility": "admin",
+    "abandoned": "admin"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

@@ -1,4 +1,6 @@
 import type {
+  AbandonedCheckoutPage,
+  AbandonedCheckoutStats,
   ActivityLogPage,
   AffiliateDetail,
   AffiliatePage,
@@ -8,6 +10,7 @@ import type {
   AnalyticsSummary,
   BalanceTransactionPage,
   BlacklistEntry,
+  BlacklistLogPage,
   BlacklistPage,
   LatestNotifications,
   PaymentMethod,
@@ -15,8 +18,13 @@ import type {
   ResellerPage,
   ResellerStats,
   ResellerTier,
+  SubscriptionDetail,
+  SubscriptionPage,
   TrafficStats,
   TrafficUtmBreakdown,
+  UpdateCouponInput,
+  WhitelistEntry,
+  WhitelistPage,
   CheckoutSession,
   Coupon,
   CreateBlacklistEntryInput,
@@ -432,6 +440,135 @@ export class SellAuthClient {
       body['product_ids'] = target.productIds;
     }
     await this.request('PUT', '/products/bulk-update/status', { body });
+  }
+
+  public async getBlacklistLogs(page: number, perPage: number): Promise<BlacklistLogPage> {
+    return this.get<BlacklistLogPage>('/blacklist-logs', {
+      page: String(page),
+      perPage: String(perPage)
+    });
+  }
+
+  public async getWhitelist(page: number, perPage: number, value?: string): Promise<WhitelistPage> {
+    const params: Record<string, string> = { page: String(page), perPage: String(perPage) };
+    if (value !== undefined) {
+      params['value'] = value;
+    }
+    return this.get<WhitelistPage>('/whitelist', params);
+  }
+
+  public async createWhitelistEntry(input: {
+    readonly value: string;
+    readonly type: string;
+    readonly reason?: string;
+  }): Promise<WhitelistEntry> {
+    const body: Record<string, unknown> = { value: input.value, type: input.type };
+    if (input.reason !== undefined) {
+      body['reason'] = input.reason;
+    }
+    return this.request<WhitelistEntry>('POST', '/whitelist', { body });
+  }
+
+  public async deleteWhitelistEntry(entryId: number): Promise<void> {
+    await this.request('DELETE', `/whitelist/${entryId}`);
+  }
+
+  /** Disputes a feedback so SellAuth staff review it. */
+  public async disputeFeedback(feedbackId: number, reason: string): Promise<void> {
+    await this.request('POST', `/feedbacks/${feedbackId}/dispute`, { body: { reason } });
+  }
+
+  public async cancelFeedbackDispute(feedbackId: number): Promise<void> {
+    await this.request('POST', `/feedbacks/${feedbackId}/cancel-dispute`);
+  }
+
+  /** Full update - the API replaces all listed fields, so pass merged values. */
+  public async updateCoupon(couponId: number, input: UpdateCouponInput): Promise<void> {
+    await this.request('PUT', `/coupons/${couponId}/update`, {
+      body: {
+        code: input.code,
+        global: input.global,
+        discount: input.discount,
+        type: input.type,
+        max_uses: input.maxUses,
+        max_uses_per_customer: input.maxUsesPerCustomer,
+        min_invoice_price: input.minInvoicePrice,
+        expiration_date: input.expirationDate
+      }
+    });
+  }
+
+  public async getSubscriptions(
+    page: number,
+    perPage: number,
+    status?: string
+  ): Promise<SubscriptionPage> {
+    const params: Record<string, string> = { page: String(page), perPage: String(perPage) };
+    if (status !== undefined) {
+      params['status'] = status;
+    }
+    return this.get<SubscriptionPage>('/subscriptions', params);
+  }
+
+  public async getSubscription(subscriptionId: number): Promise<SubscriptionDetail> {
+    return this.get<SubscriptionDetail>(`/subscriptions/${subscriptionId}`);
+  }
+
+  public async cancelSubscription(subscriptionId: number, atPeriodEnd: boolean): Promise<void> {
+    await this.request('POST', `/subscriptions/${subscriptionId}/cancel`, {
+      body: { at_period_end: atPeriodEnd }
+    });
+  }
+
+  /** Sets the stock count of a service or dynamic product variant (-1 = unlimited). */
+  public async updateVariantStock(
+    productId: number,
+    variantId: number,
+    stock: number
+  ): Promise<void> {
+    await this.request('PUT', `/products/${productId}/stock/${variantId}`, { body: { stock } });
+  }
+
+  public async archiveTicket(ticketId: string): Promise<void> {
+    await this.request('POST', `/tickets/${ticketId}/archive`);
+  }
+
+  public async unarchiveTicket(ticketId: string): Promise<void> {
+    await this.request('POST', `/tickets/${ticketId}/unarchive`);
+  }
+
+  /** Sets the storefront visibility of products via the bulk endpoint. */
+  public async updateProductVisibilities(
+    target: 'all' | { readonly productIds: readonly number[] },
+    visibility: 'public' | 'unlisted' | 'private' | 'on_hold'
+  ): Promise<void> {
+    const body: Record<string, unknown> = { visibility };
+    if (target === 'all') {
+      body['all'] = true;
+    } else {
+      body['product_ids'] = target.productIds;
+    }
+    await this.request('PUT', '/products/bulk-update/visibility', { body });
+  }
+
+  public async getAbandonedCheckouts(page: number, perPage: number): Promise<AbandonedCheckoutPage> {
+    return this.get<AbandonedCheckoutPage>('/abandoned-checkouts', {
+      page: String(page),
+      perPage: String(perPage)
+    });
+  }
+
+  public async getAbandonedCheckoutStats(): Promise<AbandonedCheckoutStats> {
+    return this.get<AbandonedCheckoutStats>('/abandoned-checkouts/stats');
+  }
+
+  /** Sends a recovery email for an abandoned checkout, optionally attaching a coupon. */
+  public async recoverAbandonedCheckout(invoiceId: number, couponId?: number): Promise<void> {
+    await this.request(
+      'POST',
+      `/abandoned-checkouts/${invoiceId}/recover`,
+      couponId === undefined ? {} : { body: { coupon_id: couponId } }
+    );
   }
 
   public async getPaymentMethods(): Promise<readonly PaymentMethod[]> {

@@ -7,9 +7,9 @@ import {
   type AutocompleteInteraction,
   type ChatInputCommandInteraction
 } from 'discord.js';
+import { replyWithApiError } from '../lib/apiErrors.js';
 import { formatCount, truncate } from '../lib/format.js';
-import { SellAuthApiError } from '../sellauth/client.js';
-import type { BlacklistEntry, BlacklistLogEntry } from '../sellauth/types.js';
+import type { WhitelistEntry } from '../sellauth/types.js';
 import { EMBED_COLOR, type Command, type CommandContext } from './types.js';
 
 const MAX_AUTOCOMPLETE_CHOICES = 25;
@@ -18,8 +18,7 @@ const MAX_REASON_LENGTH = 255;
 const CACHE_TTL_MS = 60_000;
 const CACHE_PAGE_SIZE = 100;
 const ENTRIES_PER_PAGE = 15;
-/** Autocomplete choice values carry the entry ID with this prefix, because
- * blacklisted values themselves can be fully numeric (Discord IDs, ASNs). */
+/** Autocomplete values carry the entry ID, since whitelisted values can be fully numeric. */
 const ID_PREFIX = 'id:';
 
 const ENTRY_TYPES = [
@@ -35,28 +34,28 @@ const ENTRY_TYPES = [
   { name: 'User agent', value: 'user_agent' }
 ] as const;
 
-interface BlacklistCache {
+interface WhitelistCache {
   readonly fetchedAt: number;
-  readonly entries: readonly BlacklistEntry[];
+  readonly entries: readonly WhitelistEntry[];
 }
 
-let blacklistCache: BlacklistCache | null = null;
+let whitelistCache: WhitelistCache | null = null;
 
-async function cachedEntries(context: CommandContext): Promise<readonly BlacklistEntry[]> {
+async function cachedEntries(context: CommandContext): Promise<readonly WhitelistEntry[]> {
   const now = Date.now();
-  if (blacklistCache !== null && now - blacklistCache.fetchedAt < CACHE_TTL_MS) {
-    return blacklistCache.entries;
+  if (whitelistCache !== null && now - whitelistCache.fetchedAt < CACHE_TTL_MS) {
+    return whitelistCache.entries;
   }
-  const firstPage = await context.sellAuth.getBlacklist(1, CACHE_PAGE_SIZE);
-  blacklistCache = { fetchedAt: now, entries: firstPage.data };
+  const firstPage = await context.sellAuth.getWhitelist(1, CACHE_PAGE_SIZE);
+  whitelistCache = { fetchedAt: now, entries: firstPage.data };
   return firstPage.data;
 }
 
-function invalidateBlacklistCache(): void {
-  blacklistCache = null;
+function invalidateWhitelistCache(): void {
+  whitelistCache = null;
 }
 
-function entryLine(entry: BlacklistEntry): string {
+function entryLine(entry: WhitelistEntry): string {
   const parts = [`\`${entry.value}\``, entry.type];
   if (entry.reason !== null && entry.reason !== '') {
     parts.push(truncate(entry.reason, 60));
@@ -73,22 +72,22 @@ async function handleList(
   context: CommandContext
 ): Promise<void> {
   const page = interaction.options.getInteger('page') ?? 1;
-  const entries = await context.sellAuth.getBlacklist(page, ENTRIES_PER_PAGE);
+  const entries = await context.sellAuth.getWhitelist(page, ENTRIES_PER_PAGE);
   const lastPage = Math.max(entries.last_page, 1);
 
   if (entries.data.length === 0) {
     await interaction.editReply({
       content:
-        entries.total === 0 ? 'The blacklist is empty.' : `Page ${page} is empty (last page is ${lastPage}).`
+        entries.total === 0 ? 'The whitelist is empty.' : `Page ${page} is empty (last page is ${lastPage}).`
     });
     return;
   }
 
   const embed = new EmbedBuilder()
     .setColor(EMBED_COLOR)
-    .setTitle(`Blacklist (${formatCount(entries.total)})`)
+    .setTitle(`Whitelist (${formatCount(entries.total)})`)
     .setDescription(entries.data.map(entryLine).join('\n'))
-    .setFooter({ text: `Page ${entries.current_page}/${lastPage}` })
+    .setFooter({ text: `Page ${entries.current_page}/${lastPage} \u00B7 Whitelist entries override blacklist rules` })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
@@ -107,34 +106,30 @@ async function handleAdd(
     return;
   }
 
-  const existing = await context.sellAuth.getBlacklist(1, CACHE_PAGE_SIZE, value);
+  const existing = await context.sellAuth.getWhitelist(1, CACHE_PAGE_SIZE, value);
   const duplicate = existing.data.find(
     (entry) => entry.type === type && entry.value.toLowerCase() === value.toLowerCase()
   );
   if (duplicate !== undefined) {
     await interaction.editReply({
-      content: `\`${duplicate.value}\` is already blacklisted as ${duplicate.type}.`
+      content: `\`${duplicate.value}\` is already whitelisted as ${duplicate.type}.`
     });
     return;
   }
 
   try {
-    await context.sellAuth.createBlacklistEntry(
+    await context.sellAuth.createWhitelistEntry(
       reason === undefined || reason === '' ? { value, type } : { value, type, reason }
     );
   } catch (error) {
-    if (error instanceof SellAuthApiError) {
-      const detail = error.apiMessage ?? `the SellAuth API responded with HTTP ${error.status}`;
-      await interaction.editReply({ content: `Could not add the entry: ${detail}` });
-      return;
-    }
-    throw error;
+    await replyWithApiError(interaction, error, 'add the whitelist entry');
+    return;
   }
-  invalidateBlacklistCache();
+  invalidateWhitelistCache();
 
   const reasonSuffix = reason === undefined || reason === '' ? '' : ` (reason: ${reason})`;
   await interaction.editReply({
-    content: `\`${value}\` was added to the blacklist as ${type}${reasonSuffix}.`
+    content: `\`${value}\` was whitelisted as ${type}${reasonSuffix}. It now overrides matching blacklist rules.`
   });
 }
 
@@ -144,17 +139,17 @@ async function handleRemove(
 ): Promise<void> {
   const input = interaction.options.getString('value', true).trim();
 
-  let entry: BlacklistEntry | undefined;
+  let entry: WhitelistEntry | undefined;
   if (input.startsWith(ID_PREFIX)) {
     const id = Number(input.slice(ID_PREFIX.length));
     entry = (await cachedEntries(context)).find((candidate) => candidate.id === id);
   } else {
-    const matches = (await context.sellAuth.getBlacklist(1, CACHE_PAGE_SIZE, input)).data.filter(
+    const matches = (await context.sellAuth.getWhitelist(1, CACHE_PAGE_SIZE, input)).data.filter(
       (candidate) => candidate.value.toLowerCase() === input.toLowerCase()
     );
     if (matches.length > 1) {
       await interaction.editReply({
-        content: `\`${input}\` is blacklisted under multiple types (${matches.map((match) => match.type).join(', ')}). Pick the exact entry from the autocomplete suggestions.`
+        content: `\`${input}\` is whitelisted under multiple types (${matches.map((match) => match.type).join(', ')}). Pick the exact entry from the autocomplete suggestions.`
       });
       return;
     }
@@ -162,84 +157,26 @@ async function handleRemove(
   }
 
   if (entry === undefined) {
-    await interaction.editReply({ content: `No blacklist entry found for \`${input}\`.` });
+    await interaction.editReply({ content: `No whitelist entry found for \`${input}\`.` });
     return;
   }
 
-  await context.sellAuth.deleteBlacklistEntry(entry.id);
-  invalidateBlacklistCache();
+  await context.sellAuth.deleteWhitelistEntry(entry.id);
+  invalidateWhitelistCache();
 
   await interaction.editReply({
-    content: `\`${entry.value}\` (${entry.type}) was removed from the blacklist.`
+    content: `\`${entry.value}\` (${entry.type}) was removed from the whitelist.`
   });
 }
 
-async function handleCheck(
-  interaction: ChatInputCommandInteraction,
-  context: CommandContext
-): Promise<void> {
-  const value = interaction.options.getString('value', true).trim();
-  const matches = (await context.sellAuth.getBlacklist(1, CACHE_PAGE_SIZE, value)).data;
-
-  if (matches.length === 0) {
-    await interaction.editReply({ content: `\`${value}\` is not on the blacklist.` });
-    return;
-  }
-
-  const embed = new EmbedBuilder()
-    .setColor(EMBED_COLOR)
-    .setTitle(`Blacklist matches for "${truncate(value, 100)}"`)
-    .setDescription(matches.map(entryLine).join('\n'))
-    .setTimestamp();
-
-  await interaction.editReply({ embeds: [embed] });
-}
-
-function logLine(entry: BlacklistLogEntry): string {
-  const parts = [`\`${entry.value}\``, entry.decision];
-  if (entry.rule !== null) {
-    parts.push(`matched ${entry.rule.type} rule \`${entry.rule.value}\``);
-  }
-  parts.push(time(new Date(entry.created_at), TimestampStyles.ShortDateTime));
-  return parts.join(' \u00B7 ');
-}
-
-async function handleLogs(
-  interaction: ChatInputCommandInteraction,
-  context: CommandContext
-): Promise<void> {
-  const page = interaction.options.getInteger('page') ?? 1;
-  const logs = await context.sellAuth.getBlacklistLogs(page, ENTRIES_PER_PAGE);
-  const lastPage = Math.max(logs.last_page, 1);
-
-  if (logs.data.length === 0) {
-    await interaction.editReply({
-      content:
-        logs.total === 0
-          ? 'No blocked checkout attempts logged yet.'
-          : `Page ${page} is empty (last page is ${lastPage}).`
-    });
-    return;
-  }
-
-  const embed = new EmbedBuilder()
-    .setColor(EMBED_COLOR)
-    .setTitle(`Blocked checkout attempts (${formatCount(logs.total)})`)
-    .setDescription(logs.data.map(logLine).join('\n'))
-    .setFooter({ text: `Page ${logs.current_page}/${lastPage}` })
-    .setTimestamp();
-
-  await interaction.editReply({ embeds: [embed] });
-}
-
-export const blacklistCommand: Command = {
+export const whitelistCommand: Command = {
   data: new SlashCommandBuilder()
-    .setName('blacklist')
-    .setDescription('Manage who is blocked from buying in your shop')
+    .setName('whitelist')
+    .setDescription('Manage exceptions that override your blacklist rules')
     .addSubcommand((subcommand) =>
       subcommand
         .setName('list')
-        .setDescription('List blacklist entries')
+        .setDescription('List whitelist entries')
         .addIntegerOption((option) =>
           option.setName('page').setDescription('Page number').setMinValue(1)
         )
@@ -247,7 +184,7 @@ export const blacklistCommand: Command = {
     .addSubcommand((subcommand) =>
       subcommand
         .setName('add')
-        .setDescription('Add an entry to the blacklist')
+        .setDescription('Add an entry to the whitelist')
         .addStringOption((option) =>
           option
             .setName('type')
@@ -258,48 +195,28 @@ export const blacklistCommand: Command = {
         .addStringOption((option) =>
           option
             .setName('value')
-            .setDescription('The email, IP, Discord ID, etc. to block')
+            .setDescription('The email, IP, Discord ID, etc. to allow')
             .setRequired(true)
             .setMaxLength(255)
         )
         .addStringOption((option) =>
           option
             .setName('reason')
-            .setDescription('Why this entry is blocked (shown in the dashboard)')
+            .setDescription('Why this entry is allowed (shown in the dashboard)')
             .setMaxLength(MAX_REASON_LENGTH)
         )
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('remove')
-        .setDescription('Remove an entry from the blacklist')
+        .setDescription('Remove an entry from the whitelist')
         .addStringOption((option) =>
           option
             .setName('value')
-            .setDescription('The blacklisted value to remove')
+            .setDescription('The whitelisted value to remove')
             .setRequired(true)
             .setMaxLength(255)
             .setAutocomplete(true)
-        )
-    )
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName('check')
-        .setDescription('Check whether a value is blacklisted and why')
-        .addStringOption((option) =>
-          option
-            .setName('value')
-            .setDescription('The email, IP, Discord ID, etc. to check')
-            .setRequired(true)
-            .setMaxLength(255)
-        )
-    )
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName('logs')
-        .setDescription('Recent checkout attempts that were blocked by the blacklist')
-        .addIntegerOption((option) =>
-          option.setName('page').setDescription('Page number').setMinValue(1)
         )
     ),
 
@@ -336,12 +253,6 @@ export const blacklistCommand: Command = {
         return;
       case 'remove':
         await handleRemove(interaction, context);
-        return;
-      case 'check':
-        await handleCheck(interaction, context);
-        return;
-      case 'logs':
-        await handleLogs(interaction, context);
         return;
       default:
         await interaction.editReply({ content: 'Unknown subcommand.' });

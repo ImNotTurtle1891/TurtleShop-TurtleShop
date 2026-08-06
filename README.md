@@ -8,7 +8,7 @@ Restocking a product with `/restock` — paste the keys (or attach a `.txt`), an
 
 ![Restocking a product with /restock](https://i.imgur.com/Yfmi89w.gif)
 
-## Commands
+## Commands (Total: 92)
 
 | Command | Description |
 | --- | --- |
@@ -42,20 +42,31 @@ Restocking a product with `/restock` — paste the keys (or attach a `.txt`), an
 | `/balance add <email> <amount> [reason]` / `/balance remove <email> <amount> [reason]` | Add or deduct store credit (max 1000 per adjustment). The reason shows up in the ledger. |
 | `/coupon list [page]` | List coupons with discount, usage counts, total savings, and expiry. |
 | `/coupon create <code> <discount> <type> [...]` | Create an all-products coupon. Optional: max uses, uses per customer, minimum order value, expiry in days. |
+| `/coupon edit <code> [...]` | Change a coupon's discount, type, use limits, minimum order, or expiry without recreating it. |
 | `/coupon delete <code>` | Delete a coupon. The code option autocompletes from your live coupons. |
 | `/blacklist list [page]` | List blacklist entries with type, reason, and date. |
 | `/blacklist add <type> <value> [reason]` | Block an email, email domain, Discord ID, IP, IP range, country, city, ISP, ASN, or user agent. |
 | `/blacklist remove <value>` | Remove a blacklist entry. Autocompletes from your live blacklist. |
 | `/blacklist check <value>` | Check whether a value is blacklisted and why (support-level by default). |
+| `/blacklist logs [page]` | Recent checkout attempts that were blocked, with the rule that caught them. |
+| `/whitelist list\|add\|remove` | Exceptions that override blacklist rules — e.g. unblock one trusted customer on a blocked IP range. |
 | `/createinvoice product <product> [...]` | Create an invoice for a catalog product and get a checkout link. The product option autocompletes with variants and prices. Optional: quantity, customer email, coupon. |
 | `/createinvoice custom <name> <price> [...]` | Create an invoice for a one-off charge that is not in your catalog. Optional: currency, quantity, customer email, coupon. Requires a SellAuth plan with the Checkout API feature. |
 | `/feedback recent [page] [rating] [written]` | Recent reviews, newest first. Filter by star rating or to customer-written reviews only. |
 | `/feedback stats` | Rating breakdown with per-star bars, average, and reply rate. |
 | `/feedback reply <id> <message>` | Post a public reply to a review (the ID is shown in `/feedback recent`). |
+| `/feedback dispute <id> <reason>` / `/feedback cancel-dispute <id>` | Flag an unfair review for SellAuth staff review, or withdraw the dispute. |
 | `/ticket list [status] [email] [page]` | List support tickets, newest first, filterable by status or customer. |
 | `/ticket view <id>` | A ticket with its recent messages. The ID option autocompletes by subject and customer. |
 | `/ticket reply <id> <message>` | Send a message to a ticket as the shop. |
 | `/ticket close <id>` / `/ticket reopen <id>` | Close or reopen a ticket. |
+| `/ticket archive <id>` / `/ticket unarchive <id>` | Archive a ticket (hides it from the default list) or bring it back. |
+| `/subscription list [status] [page]` | List customer subscriptions with price, interval, and renewal date. |
+| `/subscription view <id>` / `/subscription cancel <id> [immediately]` | Subscription details, or cancel one (at period end by default). |
+| `/setstock <product> <amount>` | Set the stock count of a dynamic/service variant (-1 for unlimited). For serial-key products use `/restock`. |
+| `/product-visibility <product> <visibility>` | Set a product to public, unlisted, private, or on hold. |
+| `/abandoned list [page]` / `/abandoned stats` | Abandoned checkouts with lost revenue, and recovery statistics. Requires a SellAuth plan with abandoned checkouts. |
+| `/abandoned recover <id> [coupon]` | Send a recovery email for an abandoned checkout, optionally attaching a coupon as an incentive. |
 | `/restock <product>` | Add serial keys to a serial-key product. The bot prompts you to send the keys in your next message (comma- or newline-separated, or a `.txt` attachment), adds them to the stock, then deletes your message. |
 | `/stock [threshold]` | Stock overview across all products with out-of-stock and low-stock warnings (default threshold: 10, unlimited-stock variants are skipped). |
 | `/status list` | Every product with its current storefront status badge, grouped by status. |
@@ -178,9 +189,9 @@ Two copies of the bot are running with the same token, and they race each other 
 - Your SellAuth API key has full access to your shop. Only run this bot on machines you control.
 - Customer emails are masked in `/top customers` output, but revenue data is still sensitive — keep the commands admin-only unless you're comfortable sharing it.
 
-## Suggestions, custom versions & hosting
+## Bug reports, suggestions, custom versions & hosting
 
-Have a feature suggestion, or want a custom version of SellBot with extra functionality or changes tailored to your shop? Don't want to self-host and would rather have the bot hosted for you? Get in touch:
+Found a bug? Please report it so it can be fixed. Also get in touch if you have a feature suggestion, want a custom version of SellBot with extra functionality or changes tailored to your shop, or don't want to self-host and would rather have the bot hosted for you:
 
 - **Discord:** `barkiegg`
 - **Email:** [barkie.media@gmail.com](mailto:barkie.media@gmail.com)
