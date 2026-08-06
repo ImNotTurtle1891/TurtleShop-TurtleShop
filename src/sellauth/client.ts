@@ -1,7 +1,21 @@
 import type {
+  ActivityLogPage,
+  AffiliateDetail,
+  AffiliatePage,
+  AffiliatePayoutPage,
+  AffiliateStats,
+  AffiliateTier,
   AnalyticsSummary,
   BlacklistEntry,
   BlacklistPage,
+  LatestNotifications,
+  PaymentMethod,
+  ResellerDetail,
+  ResellerPage,
+  ResellerStats,
+  ResellerTier,
+  TrafficStats,
+  TrafficUtmBreakdown,
   CheckoutSession,
   Coupon,
   CreateBlacklistEntryInput,
@@ -353,6 +367,146 @@ export class SellAuthClient {
       page: String(page),
       perPage: String(perPage)
     });
+  }
+
+  public async getPaymentMethods(): Promise<readonly PaymentMethod[]> {
+    const page = await this.get<{ data: readonly PaymentMethod[] }>('/payment-methods');
+    return page.data;
+  }
+
+  /** Flips the active status of a payment method. */
+  public async togglePaymentMethod(paymentMethodId: number): Promise<void> {
+    await this.request('POST', `/payment-methods/${paymentMethodId}/toggle`);
+  }
+
+  public async getTrafficStats(range: DateRange): Promise<TrafficStats> {
+    return this.get<TrafficStats>('/analytics/traffic/stats', dateRangeParams(range));
+  }
+
+  public async getActiveVisitors(): Promise<number> {
+    const result = await this.get<{ visitors: number }>('/analytics/traffic/active');
+    return result.visitors;
+  }
+
+  public async getTrafficUtm(range: DateRange): Promise<TrafficUtmBreakdown> {
+    return this.get<TrafficUtmBreakdown>('/analytics/traffic/utm', dateRangeParams(range));
+  }
+
+  public async getLatestNotifications(): Promise<LatestNotifications> {
+    return this.get<LatestNotifications>('/notifications/latest');
+  }
+
+  public async getActivityLogs(page: number, perPage: number): Promise<ActivityLogPage> {
+    return this.get<ActivityLogPage>('/activity-logs', {
+      page: String(page),
+      perPage: String(perPage)
+    });
+  }
+
+  public async getAffiliates(page: number, perPage: number, search?: string): Promise<AffiliatePage> {
+    const params: Record<string, string> = { page: String(page), perPage: String(perPage) };
+    if (search !== undefined) {
+      params['search'] = search;
+    }
+    return this.get<AffiliatePage>('/affiliates', params);
+  }
+
+  public async getAffiliateStats(): Promise<AffiliateStats> {
+    return this.get<AffiliateStats>('/affiliates/stats');
+  }
+
+  public async getAffiliate(customerId: number): Promise<AffiliateDetail> {
+    return this.get<AffiliateDetail>(`/affiliates/${customerId}`);
+  }
+
+  public async inviteAffiliate(email: string, code: string, tierId: number): Promise<void> {
+    await this.request('POST', '/affiliates/invite', {
+      body: { email, affiliate_code: code, tier_id: tierId }
+    });
+  }
+
+  public async suspendAffiliate(customerId: number): Promise<void> {
+    await this.request('POST', `/affiliates/${customerId}/suspend`);
+  }
+
+  public async restoreAffiliate(customerId: number): Promise<void> {
+    await this.request('POST', `/affiliates/${customerId}/restore`);
+  }
+
+  public async getAffiliateTiers(): Promise<readonly AffiliateTier[]> {
+    return this.get<readonly AffiliateTier[]>('/affiliate-tiers');
+  }
+
+  public async getAffiliatePayouts(
+    perPage: number,
+    status?: 'pending' | 'paid' | 'rejected' | 'cancelled'
+  ): Promise<AffiliatePayoutPage> {
+    const params: Record<string, string> = { perPage: String(perPage) };
+    if (status !== undefined) {
+      params['status'] = status;
+    }
+    return this.get<AffiliatePayoutPage>('/affiliate-payouts', params);
+  }
+
+  /** Marks a pending payout request as paid (the actual money moves outside SellAuth). */
+  public async payAffiliatePayout(payoutRequestId: number): Promise<void> {
+    await this.request('POST', `/affiliate-payouts/${payoutRequestId}/pay`);
+  }
+
+  /** Rejects a pending payout request and refunds the amount to the affiliate balance. */
+  public async rejectAffiliatePayout(payoutRequestId: number, note?: string): Promise<void> {
+    await this.request(
+      'POST',
+      `/affiliate-payouts/${payoutRequestId}/reject`,
+      note === undefined ? {} : { body: { seller_note: note } }
+    );
+  }
+
+  public async getResellers(
+    page: number,
+    perPage: number,
+    options: { readonly status?: string; readonly search?: string } = {}
+  ): Promise<ResellerPage> {
+    const params: Record<string, string> = { page: String(page), perPage: String(perPage) };
+    if (options.status !== undefined) {
+      params['status'] = options.status;
+    }
+    if (options.search !== undefined) {
+      params['search'] = options.search;
+    }
+    return this.get<ResellerPage>('/resellers', params);
+  }
+
+  public async getResellerStats(): Promise<ResellerStats> {
+    return this.get<ResellerStats>('/resellers/stats');
+  }
+
+  public async getReseller(customerId: number): Promise<ResellerDetail> {
+    return this.get<ResellerDetail>(`/resellers/${customerId}`);
+  }
+
+  public async inviteReseller(email: string, tierId: number): Promise<void> {
+    await this.request('POST', '/resellers/invite', { body: { email, tier_id: tierId } });
+  }
+
+  public async approveReseller(customerId: number, tierId: number): Promise<void> {
+    await this.request('POST', `/resellers/${customerId}/approve`, { body: { tier_id: tierId } });
+  }
+
+  public async rejectReseller(customerId: number): Promise<void> {
+    await this.request('POST', `/resellers/${customerId}/reject`);
+  }
+
+  public async suspendReseller(customerId: number): Promise<void> {
+    await this.request('POST', `/resellers/${customerId}/suspend`);
+  }
+
+  public async restoreReseller(customerId: number): Promise<void> {
+    await this.request('POST', `/resellers/${customerId}/restore`);
+  }
+
+  public async getResellerTiers(): Promise<readonly ResellerTier[]> {
+    return this.get<readonly ResellerTier[]>('/reseller-tiers');
   }
 
   private async get<T>(path: string, query?: QueryParams): Promise<T> {

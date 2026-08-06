@@ -29,7 +29,21 @@
     "createinvoice": "support",
     "restock": "admin",
     "feedback": "support",
-    "ticket": "support"
+    "ticket": "support",
+    "stock": "support",
+    "paymentmethods": "admin",
+    "traffic": "admin",
+    "notifications": "admin",
+    "activity": "admin",
+    "affiliate": "admin",
+    "affiliate list": "support",
+    "affiliate stats": "support",
+    "affiliate view": "support",
+    "affiliate payouts": "support",
+    "reseller": "admin",
+    "reseller list": "support",
+    "reseller stats": "support",
+    "reseller view": "support"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

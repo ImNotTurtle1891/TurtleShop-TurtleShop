@@ -333,3 +333,203 @@ export interface Invoice {
   readonly blacklist_status: InvoiceBlacklistStatus | null;
   readonly items: readonly InvoiceDetailItem[];
 }
+
+export interface PaymentMethod {
+  readonly id: number;
+  readonly type: string;
+  readonly name: string;
+  readonly checkout_name: string | null;
+  readonly percentage_fee: number | null;
+  readonly fixed_fee: number | null;
+  readonly min_amount: number | string | null;
+  readonly max_amount: number | string | null;
+  readonly is_active: boolean;
+}
+
+export interface TrafficTotals {
+  readonly pageviews: number;
+  readonly visitors: number;
+  readonly visits: number;
+  readonly bounces: number;
+  readonly totaltime: number;
+}
+
+export interface TrafficStats extends TrafficTotals {
+  readonly comparison: TrafficTotals;
+}
+
+/** Umami-style metric entry: x is the value (e.g. UTM source), y is the visit count. */
+export interface TrafficMetric {
+  readonly x: string | null;
+  readonly y: number;
+}
+
+export interface TrafficUtmBreakdown {
+  readonly utm_source: readonly TrafficMetric[];
+  readonly utm_medium: readonly TrafficMetric[];
+  readonly utm_campaign: readonly TrafficMetric[];
+  readonly utm_term: readonly TrafficMetric[];
+  readonly utm_content: readonly TrafficMetric[];
+}
+
+export interface ShopNotification {
+  readonly id: string;
+  readonly level: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly link: string | null;
+  readonly created_at: string;
+}
+
+export interface LatestNotifications {
+  readonly notifications: readonly ShopNotification[];
+  readonly unread_count: number;
+}
+
+export interface ActivityLogEntry {
+  readonly id: number;
+  readonly type: string;
+  readonly user_email: string | null;
+  readonly subject_id: number | null;
+  readonly subject_type: string | null;
+  readonly properties: {
+    readonly old?: Readonly<Record<string, unknown>>;
+    readonly attributes?: Readonly<Record<string, unknown>>;
+  } | null;
+  readonly created_at: string;
+}
+
+export interface ActivityLogPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly ActivityLogEntry[];
+}
+
+export interface Affiliate {
+  readonly id: number;
+  readonly email: string;
+  readonly affiliate_balance: string;
+  readonly affiliate_code: string | null;
+  readonly affiliate_code_set_at: string | null;
+  readonly affiliate_referrer_earnings: string;
+  readonly referrals_count: number;
+  readonly affiliate_tier: { readonly name: string } | null;
+}
+
+export interface AffiliatePage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly Affiliate[];
+}
+
+export interface AffiliateStats {
+  readonly total_affiliates: number;
+  readonly active_affiliates: number;
+  readonly inactive_affiliates: number;
+  readonly new_affiliates: number;
+  readonly new_affiliates_previous: number;
+  readonly commissions_usd: number;
+  readonly commissions_usd_previous: number;
+  readonly commissions_usd_all_time: number;
+  readonly referral_revenue_usd: number;
+  readonly referral_revenue_usd_previous: number;
+  readonly referral_revenue_usd_all_time: number;
+  readonly average_commission_rate: number;
+  readonly top_earner_usd: number;
+  readonly top_performers: readonly Affiliate[];
+  readonly pending_payout_requests: number;
+  readonly window_days: number;
+}
+
+export interface AffiliatePayoutRequest {
+  readonly id: number;
+  readonly shop_customer_id: number;
+  readonly amount: number | string;
+  readonly status: string;
+  readonly payout_details: string | null;
+  readonly seller_note: string | null;
+  readonly processed_at: string | null;
+  readonly created_at: string;
+  readonly shop_customer: {
+    readonly id: number;
+    readonly email: string;
+    readonly affiliate_code: string | null;
+    readonly affiliate_balance: string;
+  } | null;
+}
+
+export interface AffiliatePayoutPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly AffiliatePayoutRequest[];
+}
+
+export interface AffiliateDetail {
+  readonly affiliate: Affiliate;
+  readonly referrals: readonly unknown[];
+  readonly attributed_invoices: readonly unknown[];
+  readonly payout_requests: readonly AffiliatePayoutRequest[];
+}
+
+export interface AffiliateTier {
+  readonly id: number;
+  readonly name: string;
+  readonly percentage: number;
+  readonly is_default: boolean;
+}
+
+export interface Reseller {
+  readonly id: number;
+  readonly email: string;
+  readonly balance: string;
+  readonly reseller_status: string;
+  readonly reseller_applied_at: string | null;
+  readonly reseller_approved_at: string | null;
+  readonly reseller_total_spent_usd: number | string;
+  readonly reseller_total_completed: number;
+  readonly reseller_tier: { readonly name: string } | null;
+}
+
+export interface ResellerPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly Reseller[];
+}
+
+export interface ResellerStats {
+  readonly total_resellers: number;
+  readonly active_resellers: number;
+  readonly inactive_resellers: number;
+  readonly new_resellers: number;
+  readonly pending_applications: number;
+  readonly revenue_usd: number;
+  readonly revenue_usd_previous: number;
+  readonly revenue_usd_all_time: number;
+  readonly orders_all_time: number;
+  readonly top_performers: readonly Reseller[];
+  readonly window_days: number;
+}
+
+export interface ResellerOrder {
+  readonly id: number;
+  readonly status: string;
+  readonly price_usd: string | null;
+  readonly created_at: string;
+  readonly unique_id: string;
+}
+
+export interface ResellerDetail {
+  readonly reseller: Reseller & { readonly reseller_application_answer: string | null };
+  readonly orders: readonly ResellerOrder[];
+}
+
+export interface ResellerTier {
+  readonly id: number;
+  readonly name: string;
+  readonly discount_percentage: number;
+  readonly is_default: boolean;
+}

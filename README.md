@@ -47,6 +47,17 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners — r
 | `/ticket reply <id> <message>` | Send a message to a ticket as the shop. |
 | `/ticket close <id>` / `/ticket reopen <id>` | Close or reopen a ticket. |
 | `/restock <product>` | Add serial keys to a serial-key product. The bot prompts you to send the keys in your next message (comma- or newline-separated, or a `.txt` attachment), adds them to the stock, then deletes your message. |
+| `/stock [threshold]` | Stock overview across all products with out-of-stock and low-stock warnings (default threshold: 10, unlimited-stock variants are skipped). |
+| `/paymentmethods list` | List all payment methods with their status and fees. |
+| `/paymentmethods toggle <method>` | Enable or disable a payment method — e.g. temporarily disable a gateway that is acting up. |
+| `/traffic [timeframe]` | Live visitor count plus pageviews, visits, bounce rate, average visit time and UTM breakdown, with change vs. the previous period. |
+| `/notifications [count]` | The latest dashboard notifications (sales, tickets, feedback, webhooks) with links to the dashboard. |
+| `/activity [page]` | Audit log of dashboard and staff actions with what-changed summaries (e.g. `stock: 26 → 102`). |
+| `/affiliate list\|stats\|view` | Browse your affiliates, aggregate program stats, or one affiliate's earnings, referrals and payout requests. |
+| `/affiliate invite <email> <code> [tier]` | Make a customer an affiliate. `suspend` / `restore` toggle an affiliate without losing their history. |
+| `/affiliate payouts [status]` | List payout requests; approve with `/affiliate payout-pay <id>` (money moves outside SellAuth) or reject with `/affiliate payout-reject <id> [note]` (refunds their balance). |
+| `/reseller list\|stats\|view` | Browse resellers and applications, program stats, or one reseller's profile and recent orders. Requires a SellAuth plan with the reseller panel. |
+| `/reseller invite\|approve\|reject\|suspend\|restore` | Manage reseller applications and status. `invite` approves a customer immediately; `approve`/`reject` handle pending applications. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 
