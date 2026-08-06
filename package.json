@@ -1,0 +1,31 @@
+{
+  "name": "sellbot",
+  "version": "0.1.0",
+  "description": "SellBot - a self-hosted Discord bot for SellAuth shop stats and analytics.",
+  "type": "module",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "deploy-commands": "tsx src/deploy-commands.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "discord",
+    "discord-bot",
+    "sellauth"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
