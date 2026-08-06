@@ -1,7 +1,7 @@
 {
   "name": "sellbot",
   "version": "0.1.0",
-  "description": "SellBot - a self-hosted Discord bot for SellAuth shop stats and analytics.",
+  "description": "SellBot - a self-hosted Discord bot for SellAuth shops: analytics, orders, customers, tickets, coupons, blacklist, order claiming, and more.",
   "type": "module",
   "main": "dist/index.js",
   "engines": {

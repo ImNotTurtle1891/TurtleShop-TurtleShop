@@ -1,6 +1,6 @@
 # SellBot
 
-A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View your shop's stats, revenue analytics, and top performers directly from Discord using slash commands.
+A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners — run your whole shop from Discord. Stats and revenue analytics, product browsing, customer and order lookups, an order-claiming system that hands out a customer role, support tickets, reviews, coupons, blacklist management, and invoice creation, all as slash commands with configurable admin/support/everyone permissions.
 
 ## Commands
 
