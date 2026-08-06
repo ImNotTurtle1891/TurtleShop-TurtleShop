@@ -1,11 +1,19 @@
 import type {
   AnalyticsSummary,
   DateRange,
+  ProductListQuery,
+  ProductPage,
   ShopStats,
   TopCustomer,
   TopPaymentMethod,
   TopProduct
 } from './types.js';
+
+type QueryParams = Readonly<Record<string, string>>;
+
+function dateRangeParams(range: DateRange): QueryParams {
+  return { start: range.start, end: range.end };
+}
 
 export class SellAuthApiError extends Error {
   public readonly status: number;
@@ -39,26 +47,36 @@ export class SellAuthClient {
   }
 
   public async getAnalytics(range: DateRange): Promise<AnalyticsSummary> {
-    return this.get<AnalyticsSummary>('/analytics', range);
+    return this.get<AnalyticsSummary>('/analytics', dateRangeParams(range));
   }
 
   public async getTopProducts(range: DateRange): Promise<TopProduct[]> {
-    return this.get<TopProduct[]>('/analytics/top-products', range);
+    return this.get<TopProduct[]>('/analytics/top-products', dateRangeParams(range));
   }
 
   public async getTopCustomers(range: DateRange): Promise<TopCustomer[]> {
-    return this.get<TopCustomer[]>('/analytics/top-customers', range);
+    return this.get<TopCustomer[]>('/analytics/top-customers', dateRangeParams(range));
   }
 
   public async getTopPaymentMethods(range: DateRange): Promise<TopPaymentMethod[]> {
-    return this.get<TopPaymentMethod[]>('/analytics/top-payment-methods', range);
+    return this.get<TopPaymentMethod[]>('/analytics/top-payment-methods', dateRangeParams(range));
   }
 
-  private async get<T>(path: string, query?: DateRange): Promise<T> {
+  public async getProducts(query: ProductListQuery): Promise<ProductPage> {
+    const params: Record<string, string> = {
+      page: String(query.page),
+      perPage: String(query.perPage)
+    };
+    if (query.name !== undefined) {
+      params['name'] = query.name;
+    }
+    return this.get<ProductPage>('/products', params);
+  }
+
+  private async get<T>(path: string, query?: QueryParams): Promise<T> {
     const url = new URL(`${this.baseUrl}/shops/${this.shopId}${path}`);
-    if (query !== undefined) {
-      url.searchParams.set('start', query.start);
-      url.searchParams.set('end', query.end);
+    for (const [key, value] of Object.entries(query ?? {})) {
+      url.searchParams.set(key, value);
     }
 
     const response = await fetch(url, {

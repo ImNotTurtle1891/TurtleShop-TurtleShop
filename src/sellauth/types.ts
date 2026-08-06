@@ -44,3 +44,35 @@ export interface DateRange {
   readonly start: string;
   readonly end: string;
 }
+
+export interface ProductVariant {
+  readonly id: number;
+  readonly name: string | null;
+  readonly price: string | null;
+  /** -1 means unlimited stock (service/dynamic products). */
+  readonly stock: number | null;
+}
+
+export interface ProductSummary {
+  readonly id: number;
+  readonly name: string;
+  readonly price: string | null;
+  readonly currency: string;
+  readonly visibility: string;
+  /** -1 means unlimited stock. */
+  readonly stock_count: number | null;
+  readonly variants: readonly ProductVariant[];
+}
+
+export interface ProductPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly ProductSummary[];
+}
+
+export interface ProductListQuery {
+  readonly page: number;
+  readonly perPage: number;
+  readonly name?: string;
+}
