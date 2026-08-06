@@ -123,6 +123,29 @@ export interface CreateCouponInput {
   readonly expirationDate?: string;
 }
 
+export interface CheckoutCartItem {
+  readonly productId?: number;
+  readonly variantId?: number;
+  readonly name?: string;
+  readonly price?: number;
+  readonly quantity: number;
+}
+
+export interface CreateCheckoutInput {
+  readonly cart: readonly CheckoutCartItem[];
+  readonly email?: string;
+  readonly coupon?: string;
+  /** Required when every cart item is a custom item. */
+  readonly currency?: string;
+}
+
+export interface CheckoutSession {
+  readonly success: boolean;
+  readonly invoice_id: number;
+  readonly invoice_url: string;
+  readonly url: string;
+}
+
 export interface BlacklistEntry {
   readonly id: number;
   readonly type: string;

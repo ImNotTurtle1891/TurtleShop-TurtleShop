@@ -2,8 +2,10 @@ import type {
   AnalyticsSummary,
   BlacklistEntry,
   BlacklistPage,
+  CheckoutSession,
   Coupon,
   CreateBlacklistEntryInput,
+  CreateCheckoutInput,
   CouponPage,
   CreateCouponInput,
   CustomerPage,
@@ -127,6 +129,20 @@ export class SellAuthClient {
       `/invoices/${invoiceId}/resend-email`,
       email === undefined ? {} : { body: { email } }
     );
+  }
+
+  public async createCheckoutSession(input: CreateCheckoutInput): Promise<CheckoutSession> {
+    const body: Record<string, unknown> = { cart: input.cart };
+    if (input.email !== undefined) {
+      body['email'] = input.email;
+    }
+    if (input.coupon !== undefined) {
+      body['coupon'] = input.coupon;
+    }
+    if (input.currency !== undefined) {
+      body['currency'] = input.currency;
+    }
+    return this.request<CheckoutSession>('POST', '/checkout', { body });
   }
 
   public async getBlacklist(

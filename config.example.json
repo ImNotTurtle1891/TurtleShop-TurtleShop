@@ -20,7 +20,8 @@
     "order cancel": "admin",
     "coupon": "admin",
     "blacklist": "admin",
-    "blacklist check": "support"
+    "blacklist check": "support",
+    "createinvoice": "support"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

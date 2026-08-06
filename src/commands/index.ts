@@ -3,6 +3,7 @@ import { blacklistCommand } from './blacklist.js';
 import { claimOrderEmbedCommand } from './claimorder-embed.js';
 import { commandsCommand } from './commands.js';
 import { couponCommand } from './coupon.js';
+import { createInvoiceCommand } from './createinvoice.js';
 import { customerCommand } from './customer.js';
 import { orderCommand } from './order.js';
 import { productCommand } from './product.js';
@@ -24,5 +25,6 @@ export const commands: readonly Command[] = [
   customerCommand,
   orderCommand,
   couponCommand,
-  blacklistCommand
+  blacklistCommand,
+  createInvoiceCommand
 ];

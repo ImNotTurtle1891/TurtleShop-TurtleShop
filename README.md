@@ -29,6 +29,8 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/blacklist add <type> <value> [reason]` | Block an email, email domain, Discord ID, IP, IP range, country, city, ISP, ASN, or user agent. |
 | `/blacklist remove <value>` | Remove a blacklist entry. Autocompletes from your live blacklist. |
 | `/blacklist check <value>` | Check whether a value is blacklisted and why (support-level by default). |
+| `/createinvoice product <product> [...]` | Create an invoice for a catalog product and get a checkout link. The product option autocompletes with variants and prices. Optional: quantity, customer email, coupon. |
+| `/createinvoice custom <name> <price> [...]` | Create an invoice for a one-off charge that is not in your catalog. Optional: currency, quantity, customer email, coupon. Requires a SellAuth plan with the Checkout API feature. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 

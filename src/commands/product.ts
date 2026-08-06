@@ -23,7 +23,7 @@ interface ProductCache {
 
 let productCache: ProductCache | null = null;
 
-async function cachedProducts(context: CommandContext): Promise<readonly ProductSummary[]> {
+export async function cachedProducts(context: CommandContext): Promise<readonly ProductSummary[]> {
   const now = Date.now();
   if (productCache !== null && now - productCache.fetchedAt < CACHE_TTL_MS) {
     return productCache.products;
