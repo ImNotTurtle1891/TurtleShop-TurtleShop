@@ -33,6 +33,20 @@ export async function cachedProducts(context: CommandContext): Promise<readonly 
   return firstPage.data;
 }
 
+/** Fetches every product page. Use for commands that need the whole catalog. */
+export async function fetchAllProducts(context: CommandContext): Promise<readonly ProductSummary[]> {
+  const products: ProductSummary[] = [];
+  let page = 1;
+  for (;;) {
+    const result = await context.sellAuth.getProducts({ page, perPage: CACHE_PAGE_SIZE });
+    products.push(...result.data);
+    if (page >= result.last_page) {
+      return products;
+    }
+    page += 1;
+  }
+}
+
 export const PRODUCT_VARIANT_VALUE_PATTERN = /^(\d+):(\d+)$/;
 
 export interface VariantChoice {
@@ -170,7 +184,7 @@ export const productCommand: Command = {
  * Autocomplete choices carry the product ID as their value, but users can
  * also submit free text without picking a choice - fall back to a name search.
  */
-async function resolveProductId(input: string, context: CommandContext): Promise<number | null> {
+export async function resolveProductId(input: string, context: CommandContext): Promise<number | null> {
   if (/^\d+$/.test(input)) {
     return Number(input);
   }

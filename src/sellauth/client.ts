@@ -369,6 +369,24 @@ export class SellAuthClient {
     });
   }
 
+  /** Sets or clears (with nulls) the storefront status badge of products. */
+  public async updateProductStatuses(
+    target: 'all' | { readonly productIds: readonly number[] },
+    statusText: string | null,
+    statusColor: string | null
+  ): Promise<void> {
+    const body: Record<string, unknown> = {
+      status_text: statusText,
+      status_color: statusColor
+    };
+    if (target === 'all') {
+      body['all'] = true;
+    } else {
+      body['product_ids'] = target.productIds;
+    }
+    await this.request('PUT', '/products/bulk-update/status', { body });
+  }
+
   public async getPaymentMethods(): Promise<readonly PaymentMethod[]> {
     const page = await this.get<{ data: readonly PaymentMethod[] }>('/payment-methods');
     return page.data;

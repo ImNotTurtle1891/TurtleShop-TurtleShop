@@ -17,6 +17,7 @@ import { redeemOrderCommand } from './redeemorder.js';
 import { resellerCommand } from './reseller.js';
 import { restockCommand } from './restock.js';
 import { statsCommand } from './stats.js';
+import { statusCommand } from './status.js';
 import { stockCommand } from './stock.js';
 import { ticketCommand } from './ticket.js';
 import { topCommand } from './top.js';
@@ -41,6 +42,7 @@ export const commands: readonly Command[] = [
   ticketCommand,
   restockCommand,
   stockCommand,
+  statusCommand,
   paymentMethodsCommand,
   trafficCommand,
   notificationsCommand,

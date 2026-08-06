@@ -61,6 +61,9 @@ export interface ProductSummary {
   readonly visibility: string;
   /** How the product is delivered: serials, service, files, dynamic, or physical. */
   readonly deliverables_type: string | null;
+  /** The storefront status badge, e.g. "Undetected" with color "#22c55e". */
+  readonly status_text: string | null;
+  readonly status_color: string | null;
   /** -1 means unlimited stock. */
   readonly stock_count: number | null;
   readonly variants: readonly ProductVariant[];

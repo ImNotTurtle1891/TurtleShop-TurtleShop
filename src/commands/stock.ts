@@ -6,11 +6,11 @@ import {
 } from 'discord.js';
 import { formatCount, truncate } from '../lib/format.js';
 import type { ProductSummary } from '../sellauth/types.js';
-import { EMBED_COLOR, type Command, type CommandContext } from './types.js';
+import { fetchAllProducts } from './product.js';
+import { type Command, type CommandContext } from './types.js';
 
 const DEFAULT_LOW_STOCK_THRESHOLD = 10;
 const UNLIMITED_STOCK = -1;
-const PAGE_SIZE = 100;
 const MAX_LINES_PER_FIELD = 15;
 const MAX_NAME_LENGTH = 60;
 
@@ -29,19 +29,6 @@ function variantLabel(product: ProductSummary, variantName: string | null): stri
       ? product.name
       : `${product.name} (${variantName})`;
   return truncate(name, MAX_NAME_LENGTH);
-}
-
-async function fetchAllProducts(context: CommandContext): Promise<readonly ProductSummary[]> {
-  const products: ProductSummary[] = [];
-  let page = 1;
-  for (;;) {
-    const result = await context.sellAuth.getProducts({ page, perPage: PAGE_SIZE });
-    products.push(...result.data);
-    if (page >= result.last_page) {
-      return products;
-    }
-    page += 1;
-  }
 }
 
 function stockLines(entries: readonly VariantStock[], showCount: boolean): string {

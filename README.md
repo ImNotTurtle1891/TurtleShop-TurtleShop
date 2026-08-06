@@ -2,6 +2,12 @@
 
 A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners — run your whole shop from Discord. Stats and revenue analytics, product browsing, customer and order lookups, an order-claiming system that hands out a customer role, support tickets, reviews, coupons, blacklist management, and invoice creation, all as slash commands with configurable admin/support/everyone permissions.
 
+## Showcase
+
+Restocking a product with `/restock` — paste the keys (or attach a `.txt`), and the bot adds them to stock and deletes the message:
+
+![Restocking a product with /restock](https://i.imgur.com/Yfmi89w.gif)
+
 ## Commands
 
 | Command | Description |
@@ -48,6 +54,10 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners — r
 | `/ticket close <id>` / `/ticket reopen <id>` | Close or reopen a ticket. |
 | `/restock <product>` | Add serial keys to a serial-key product. The bot prompts you to send the keys in your next message (comma- or newline-separated, or a `.txt` attachment), adds them to the stock, then deletes your message. |
 | `/stock [threshold]` | Stock overview across all products with out-of-stock and low-stock warnings (default threshold: 10, unlimited-stock variants are skipped). |
+| `/status list` | Every product with its current storefront status badge, grouped by status. |
+| `/status set <product> <text> [color]` | Set a product's status badge. Preset texts (Undetected, Updating, Down, …) and colors autocomplete; custom text and hex colors work too. Color defaults to a sensible match for the text. |
+| `/status set-all <text> [color]` | Set the status badge of **every** product at once — flip the whole shop to "Updating" the moment a game patches. |
+| `/status clear <product\|all>` | Remove the status badge from one product or all of them. |
 | `/paymentmethods list` | List all payment methods with their status and fees. |
 | `/paymentmethods toggle <method>` | Enable or disable a payment method — e.g. temporarily disable a gateway that is acting up. |
 | `/traffic [timeframe]` | Live visitor count plus pageviews, visits, bounce rate, average visit time and UTM breakdown, with change vs. the previous period. |
