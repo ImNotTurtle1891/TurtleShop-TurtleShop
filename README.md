@@ -34,6 +34,10 @@ A self-hosted Discord bot for [SellAuth](https://sellauth.com) shop owners. View
 | `/feedback recent [page] [rating] [written]` | Recent reviews, newest first. Filter by star rating or to customer-written reviews only. |
 | `/feedback stats` | Rating breakdown with per-star bars, average, and reply rate. |
 | `/feedback reply <id> <message>` | Post a public reply to a review (the ID is shown in `/feedback recent`). |
+| `/ticket list [status] [email] [page]` | List support tickets, newest first, filterable by status or customer. |
+| `/ticket view <id>` | A ticket with its recent messages. The ID option autocompletes by subject and customer. |
+| `/ticket reply <id> <message>` | Send a message to a ticket as the shop. |
+| `/ticket close <id>` / `/ticket reopen <id>` | Close or reopen a ticket. |
 
 Available timeframes: today, last 7/30/90/365 days, and all time. The default is the last 30 days.
 

@@ -11,6 +11,7 @@ import { productCommand } from './product.js';
 import { productsCommand } from './products.js';
 import { redeemOrderCommand } from './redeemorder.js';
 import { statsCommand } from './stats.js';
+import { ticketCommand } from './ticket.js';
 import { topCommand } from './top.js';
 import type { Command } from './types.js';
 
@@ -28,5 +29,6 @@ export const commands: readonly Command[] = [
   couponCommand,
   blacklistCommand,
   createInvoiceCommand,
-  feedbackCommand
+  feedbackCommand,
+  ticketCommand
 ];

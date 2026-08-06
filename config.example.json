@@ -22,7 +22,8 @@
     "blacklist": "admin",
     "blacklist check": "support",
     "createinvoice": "support",
-    "feedback": "support"
+    "feedback": "support",
+    "ticket": "support"
   },
   "allowedChannelIds": [],
   "customerRoleId": ""

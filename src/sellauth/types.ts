@@ -187,6 +187,42 @@ export interface FeedbackListQuery {
   readonly writtenOnly?: boolean;
 }
 
+export interface TicketMessage {
+  readonly id: string;
+  readonly sender_type: string;
+  readonly content: string;
+  readonly created_at: string;
+  readonly sender: { readonly email?: string } | null;
+}
+
+export interface TicketListItem {
+  readonly id: string;
+  readonly subject: string;
+  readonly status: string;
+  readonly created_at: string;
+  readonly customer: { readonly email: string } | null;
+  readonly last_message: TicketMessage | null;
+  readonly invoice: { readonly unique_id: string } | null;
+}
+
+export interface TicketDetail extends TicketListItem {
+  readonly messages: readonly TicketMessage[];
+}
+
+export interface TicketPage {
+  readonly current_page: number;
+  readonly last_page: number;
+  readonly total: number;
+  readonly data: readonly TicketListItem[];
+}
+
+export interface TicketListQuery {
+  readonly page: number;
+  readonly perPage: number;
+  readonly status?: string;
+  readonly email?: string;
+}
+
 export interface BlacklistEntry {
   readonly id: number;
   readonly type: string;

@@ -20,6 +20,9 @@ import type {
   ProductListQuery,
   ProductPage,
   ShopStats,
+  TicketDetail,
+  TicketListQuery,
+  TicketPage,
   TopCustomer,
   TopPaymentMethod,
   TopProduct
@@ -177,6 +180,40 @@ export class SellAuthClient {
 
   public async deleteBlacklistEntry(entryId: number): Promise<void> {
     await this.request('DELETE', `/blacklist/${entryId}`);
+  }
+
+  public async getTickets(query: TicketListQuery): Promise<TicketPage> {
+    const params: Record<string, string> = {
+      page: String(query.page),
+      perPage: String(query.perPage),
+      orderColumn: 'created_at',
+      orderDirection: 'desc'
+    };
+    if (query.status !== undefined) {
+      params['statuses[]'] = query.status;
+    }
+    if (query.email !== undefined) {
+      params['customer_email'] = query.email;
+    }
+    return this.get<TicketPage>('/tickets', params);
+  }
+
+  public async getTicket(ticketId: string): Promise<TicketDetail> {
+    return this.get<TicketDetail>(`/tickets/${encodeURIComponent(ticketId)}`);
+  }
+
+  public async sendTicketMessage(ticketId: string, content: string): Promise<void> {
+    await this.request('POST', `/tickets/${encodeURIComponent(ticketId)}/messages`, {
+      body: { content }
+    });
+  }
+
+  public async closeTicket(ticketId: string): Promise<void> {
+    await this.request('POST', `/tickets/${encodeURIComponent(ticketId)}/close`);
+  }
+
+  public async reopenTicket(ticketId: string): Promise<void> {
+    await this.request('POST', `/tickets/${encodeURIComponent(ticketId)}/reopen`);
   }
 
   public async getFeedbacks(query: FeedbackListQuery): Promise<FeedbackPage> {
